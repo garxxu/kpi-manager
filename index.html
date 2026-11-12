@@ -2,257 +2,493 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KPI Manager</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    * { box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPI Manager</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background: #101827;
-      color: white;
-      font-family: Arial, sans-serif;
-    }
-
-    .panel {
-      width: min(90%, 400px);
-      padding: 35px;
-      border-radius: 16px;
-      background: #1d293b;
-      box-shadow: 0 15px 50px #0005;
-    }
-
-    h1 { margin-top: 0; }
-    p { color: #aab7c9; }
-
-    input, button {
-      width: 100%;
-      padding: 13px;
-      margin-top: 12px;
-      border-radius: 8px;
-      font-size: 15px;
-    }
-
-    input {
-      background: #101827;
-      border: 1px solid #40506a;
-      color: white;
-    }
-
-    button {
-      border: 0;
-      background: #26b783;
-      color: #071b16;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    button.secondary {
-      background: #40506a;
-      color: white;
-    }
-
-    #message {
-      font-size: 13px;
-      margin-top: 15px;
-      color: #fca5a5;
-    }
-
-    #dashboard { display: none; }
-  </style>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101827;color:#eef3fa;font-family:Arial,sans-serif;min-height:100vh}
+button,input,select{font:inherit}
+button{cursor:pointer;border:0;border-radius:8px;padding:12px 16px;background:#26b783;color:#071b16;font-weight:bold}
+button.secondary{background:#40506a;color:white}
+button.danger{background:#8e3545;color:white}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,select{width:100%;padding:12px;background:#101827;border:1px solid #40506a;border-radius:8px;color:white;margin-top:7px}
+label{display:block;color:#aab7c9;font-size:13px;margin-top:14px}
+h1,h2,h3{margin-top:0}
+p{color:#aab7c9;line-height:1.5}
+.small{font-size:13px;color:#aab7c9}
+.hidden{display:none!important}
+#login{width:min(92%,420px);margin:10vh auto;background:#1d293b;padding:32px;border-radius:16px}
+#login button{width:100%;margin-top:18px}
+#message{margin-top:14px;color:#fca5a5;font-size:14px}
+header{background:#1d293b;border-bottom:1px solid #34445d;padding:18px 5%;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.brand{font-size:21px;font-weight:bold}
+.brand span{color:#26b783}
+.header-user{font-size:13px;color:#aab7c9}
+main{width:min(1100px,92%);margin:30px auto}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+nav button{background:#26364d;color:#cbd5e1}
+nav button.active{background:#26b783;color:#071b16}
+.card{background:#1d293b;border:1px solid #34445d;border-radius:14px;padding:22px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.user-card{background:#243249;border:1px solid #40506a;border-radius:12px;padding:17px;margin-top:12px}
+.user-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.pill{font-size:11px;padding:5px 9px;border-radius:20px;background:#40506a;color:#e2e8f0}
+.pill.green{background:#145c47;color:#a7f3d0}
+.pill.red{background:#71313d;color:#fecaca}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+.actions button{font-size:13px;padding:9px 12px}
+hr{border:0;border-top:1px solid #40506a;margin:20px 0}
+.notice{font-size:13px;color:#aab7c9;background:#26364d;padding:12px;border-radius:8px;margin-top:12px}
+.status{font-size:13px;margin-top:12px;min-height:18px}
+.status.error{color:#fca5a5}
+.status.ok{color:#86efac}
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+@media(max-width:550px){header{padding:16px 4%}main{margin:20px auto}.card{padding:17px}}
+</style>
 </head>
 
 <body>
-  <main class="panel">
 
-    <section id="login">
-      <h1>KPI Manager</h1>
-      <p>Accede a tu panel de rendimiento.</p>
+<section id="login">
+  <h1>KPI <span style="color:#26b783">Manager</span></h1>
+  <p>Accede a tu panel de rendimiento.</p>
+  <form id="loginForm">
+    <label>Nombre de usuario</label>
+    <input id="username" autocomplete="username" required>
+    <label>Contraseña</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+    <button type="submit">Iniciar sesión</button>
+  </form>
+  <div id="message"></div>
+</section>
 
-      <form id="loginForm">
-        <input
-          id="username"
-          type="text"
-          placeholder="Nombre de usuario"
-          autocomplete="username"
-          required
-        >
+<div id="app" class="hidden">
+  <header>
+    <div class="brand">KPI <span>Manager</span></div>
+    <div>
+      <div id="headerName"></div>
+      <div id="headerRole" class="header-user"></div>
+    </div>
+    <button class="secondary" id="logout">Cerrar sesión</button>
+  </header>
 
-        <input
-          id="password"
-          type="password"
-          placeholder="Contraseña"
-          autocomplete="current-password"
-          required
-        >
+  <main>
+    <nav>
+      <button class="active" data-tab="account">Mi cuenta</button>
+      <button id="usersTab" data-tab="users" class="hidden">Usuarios</button>
+    </nav>
 
-        <button type="submit">Iniciar sesión</button>
-      </form>
+    <section id="accountSection">
+      <div class="card">
+        <h2>Mi cuenta</h2>
+        <div class="grid">
+          <div>
+            <div class="small">Nombre</div>
+            <strong id="accountName"></strong>
+          </div>
+          <div>
+            <div class="small">Usuario</div>
+            <strong id="accountUsername"></strong>
+          </div>
+          <div>
+            <div class="small">Rol</div>
+            <strong id="accountRole"></strong>
+          </div>
+        </div>
+      </div>
 
-      <div id="message"></div>
+      <div class="card">
+        <h2>Cambiar contraseña</h2>
+        <p>Introduce tu nueva contraseña. Debe tener al menos 8 caracteres.</p>
+        <form id="ownPasswordForm">
+          <label>Nueva contraseña</label>
+          <input id="ownNewPassword" type="password" minlength="8" required>
+          <label>Repetir contraseña</label>
+          <input id="ownConfirmPassword" type="password" minlength="8" required>
+          <button type="submit" style="margin-top:16px">Guardar contraseña</button>
+        </form>
+        <div id="ownPasswordStatus" class="status"></div>
+      </div>
     </section>
 
-    <section id="dashboard">
-      <h1>Bienvenido</h1>
-      <p id="userName"></p>
-      <p id="userRole"></p>
-      <button class="secondary" id="logout">Cerrar sesión</button>
-    </section>
+    <section id="usersSection" class="hidden">
+      <div class="card">
+        <div class="section-title">
+          <div>
+            <h2>Gestión de usuarios</h2>
+            <p>Administra las cuentas del equipo.</p>
+          </div>
+          <button id="refreshUsers" class="secondary">Actualizar lista</button>
+        </div>
+        <div id="usersStatus" class="status"></div>
+        <div id="usersList"></div>
+      </div>
 
+      <div class="card">
+        <h2>Crear usuario</h2>
+        <form id="createUserForm">
+          <div class="form-grid">
+            <div>
+              <label>Nombre completo</label>
+              <input id="newFullName" required>
+            </div>
+            <div>
+              <label>Nombre de usuario</label>
+              <input id="newUsername" pattern="[a-zA-Z0-9._-]{3,30}" required>
+            </div>
+            <div>
+              <label>Contraseña inicial</label>
+              <input id="newPassword" type="password" minlength="8" required>
+            </div>
+            <div>
+              <label>Rol</label>
+              <select id="newRole">
+                <option value="employee">Empleado</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" style="margin-top:18px">Crear usuario</button>
+        </form>
+        <div id="createStatus" class="status"></div>
+      </div>
+    </section>
   </main>
+</div>
 
-  <script>
-    const SUPABASE_URL = "https://lfgulqzacxlxfnbiqcqe.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_1VGaX2VB0LThR4Ntn772Tw_WVu6ZFeL";
+<script>
+const SUPABASE_URL = "https://lfgulqzacxlxfnbiqcqe.supabase.co";
+const SUPABASE_KEY = "sb_publishable_1VGaX2VB0LThR4Ntn772Tw_WVu6ZFeL";
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const client = supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
+let currentUser = null;
+let currentProfile = null;
 
-    async function changeAdminUsername(username) {
-  const { data: { session } } = await client.auth.getSession();
+const $ = id => document.getElementById(id);
 
-  if (!session) {
-    throw new Error("No hay una sesión activa.");
+function setStatus(id, message, ok=false) {
+  const el = $(id);
+  el.textContent = message;
+  el.className = "status " + (ok ? "ok" : "error");
+}
+
+async function callFunction(body) {
+  const {data,error} = await client.functions.invoke("rapid-function",{body});
+  if(error) throw new Error(error.message || "Error de conexión.");
+  if(data?.error) throw new Error(data.error);
+  return data;
+}
+
+async function loadProfile(user) {
+  const {data,error} = await client
+    .from("profiles")
+    .select("full_name,username,role,is_active")
+    .eq("user_id",user.id)
+    .single();
+
+  if(error || !data) throw new Error("No se pudo cargar tu perfil.");
+  if(!data.is_active) {
+    await client.auth.signOut();
+    throw new Error("Tu cuenta está desactivada. Contacta con un administrador.");
   }
 
-  const { data, error } = await client.functions.invoke("rapid-function", {
-    body: {
-      action: "change_my_login",
-      username: username
+  currentUser = user;
+  currentProfile = data;
+
+  $("login").classList.add("hidden");
+  $("app").classList.remove("hidden");
+
+  $("headerName").textContent = data.full_name || data.username;
+  $("headerRole").textContent = data.role === "admin" ? "Administrador" : "Empleado";
+  $("accountName").textContent = data.full_name || "—";
+  $("accountUsername").textContent = data.username || "—";
+  $("accountRole").textContent = data.role === "admin" ? "Administrador" : "Empleado";
+
+  $("usersTab").classList.toggle("hidden",data.role !== "admin");
+
+  if(data.role === "admin") await loadUsers();
+}
+
+function showTab(tab) {
+  document.querySelectorAll("nav button").forEach(b => {
+    b.classList.toggle("active",b.dataset.tab === tab);
+  });
+  $("accountSection").classList.toggle("hidden",tab !== "account");
+  $("usersSection").classList.toggle("hidden",tab !== "users");
+}
+
+document.querySelectorAll("nav button").forEach(button => {
+  button.addEventListener("click",() => showTab(button.dataset.tab));
+});
+
+$("loginForm").addEventListener("submit",async event => {
+  event.preventDefault();
+  $("message").textContent = "Comprobando acceso...";
+
+  const username = $("username").value.trim().toLowerCase();
+  const password = $("password").value;
+  const email = username.includes("@") ? username : username + "@kpi-empresa.invalid";
+
+  const {data,error} = await client.auth.signInWithPassword({email,password});
+
+  if(error) {
+    $("message").textContent = "Usuario o contraseña incorrectos.";
+    return;
+  }
+
+  try {
+    $("message").textContent = "";
+    await loadProfile(data.user);
+  } catch(err) {
+    $("message").textContent = err.message;
+  }
+});
+
+$("logout").addEventListener("click",async() => {
+  await client.auth.signOut();
+  currentUser = null;
+  currentProfile = null;
+  $("app").classList.add("hidden");
+  $("login").classList.remove("hidden");
+  $("password").value = "";
+  $("message").textContent = "Sesión cerrada.";
+});
+
+$("ownPasswordForm").addEventListener("submit",async event => {
+  event.preventDefault();
+  const password = $("ownNewPassword").value;
+  const confirm = $("ownConfirmPassword").value;
+
+  if(password.length < 8) {
+    setStatus("ownPasswordStatus","La contraseña debe tener al menos 8 caracteres.");
+    return;
+  }
+  if(password !== confirm) {
+    setStatus("ownPasswordStatus","Las contraseñas no coinciden.");
+    return;
+  }
+
+  try {
+    await callFunction({action:"change_own_password",new_password:password});
+    $("ownPasswordForm").reset();
+    setStatus("ownPasswordStatus","Contraseña actualizada correctamente.",true);
+  } catch(err) {
+    setStatus("ownPasswordStatus",err.message);
+  }
+});
+
+async function loadUsers() {
+  $("usersList").textContent = "Cargando usuarios...";
+  try {
+    const result = await callFunction({action:"list_users"});
+    $("usersList").innerHTML = "";
+
+    if(!result.users || result.users.length === 0) {
+      $("usersList").textContent = "Todavía no hay usuarios.";
+      return;
+    }
+
+    result.users.forEach(user => {
+      const card = document.createElement("div");
+      card.className = "user-card";
+
+      const top = document.createElement("div");
+      top.className = "user-top";
+
+      const info = document.createElement("div");
+      const name = document.createElement("strong");
+      name.textContent = user.full_name || user.username || "Sin nombre";
+      const detail = document.createElement("div");
+      detail.className = "small";
+      detail.textContent = "@" + (user.username || "") + " · " +
+        (user.role === "admin" ? "Administrador" : "Empleado");
+      info.append(name,detail);
+
+      const status = document.createElement("span");
+      status.className = "pill " + (user.is_active ? "green" : "red");
+      status.textContent = user.is_active ? "Activo" : "Desactivado";
+      top.append(info,status);
+      card.append(top);
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const edit = document.createElement("button");
+      edit.className = "secondary";
+      edit.textContent = "Editar";
+      edit.addEventListener("click",() => showEditForm(card,user));
+
+      const reset = document.createElement("button");
+      reset.className = "secondary";
+      reset.textContent = "Cambiar contraseña";
+      reset.addEventListener("click",() => showResetForm(card,user));
+
+      const toggle = document.createElement("button");
+      toggle.className = user.is_active ? "danger" : "secondary";
+      toggle.textContent = user.is_active ? "Desactivar" : "Activar";
+      toggle.disabled = user.user_id === currentUser.id && user.is_active;
+      toggle.addEventListener("click",async() => {
+        if(!confirm((user.is_active ? "¿Desactivar" : "Activar") +
+          " la cuenta de " + user.username + "?")) return;
+        try {
+          await callFunction({
+            action:"set_user_active",
+            target_user_id:user.user_id,
+            is_active:!user.is_active
+          });
+          await loadUsers();
+        } catch(err) {
+          setStatus("usersStatus",err.message);
+        }
+      });
+
+      actions.append(edit,reset,toggle);
+      card.append(actions);
+      $("usersList").append(card);
+    });
+  } catch(err) {
+    $("usersList").textContent = "";
+    setStatus("usersStatus",err.message);
+  }
+}
+
+function showEditForm(card,user) {
+  const old = card.querySelector(".edit-form");
+  if(old) { old.remove(); return; }
+
+  const form = document.createElement("form");
+  form.className = "edit-form";
+  form.innerHTML = `
+    <hr>
+    <label>Nombre completo</label>
+    <input name="full_name" required>
+    <label>Nombre de usuario</label>
+    <input name="username" pattern="[a-zA-Z0-9._-]{3,30}" required>
+    <label>Rol</label>
+    <select name="role">
+      <option value="employee">Empleado</option>
+      <option value="admin">Administrador</option>
+    </select>
+    <button type="submit" style="margin-top:14px">Guardar cambios</button>
+    <div class="status"></div>
+  `;
+
+  form.elements.full_name.value = user.full_name || "";
+  form.elements.username.value = user.username || "";
+  form.elements.role.value = user.role;
+
+  form.addEventListener("submit",async event => {
+    event.preventDefault();
+    const status = form.querySelector(".status");
+    const values = {
+      action:"update_user",
+      target_user_id:user.user_id,
+      full_name:form.elements.full_name.value.trim(),
+      username:form.elements.username.value.trim(),
+      role:form.elements.role.value
+    };
+
+    if(user.user_id === currentUser.id && values.role !== "admin") {
+      status.textContent = "No puedes quitarte tu propio rol de administrador.";
+      return;
+    }
+
+    try {
+      await callFunction(values);
+      await loadUsers();
+      setStatus("usersStatus","Usuario actualizado correctamente.",true);
+    } catch(err) {
+      status.textContent = err.message;
     }
   });
 
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
-
-  return data;
+  card.append(form);
 }
 
-    async function changeOwnPassword(newPassword) {
-  const { data, error } = await client.functions.invoke(
-    "rapid-function",
-    {
-      body: {
-        action: "change_own_password",
-        new_password: newPassword
-      }
+function showResetForm(card,user) {
+  const old = card.querySelector(".reset-form");
+  if(old) { old.remove(); return; }
+
+  const form = document.createElement("form");
+  form.className = "reset-form";
+  form.innerHTML = `
+    <hr>
+    <label>Nueva contraseña (mínimo 8 caracteres)</label>
+    <input type="password" name="password" minlength="8" required>
+    <label>Repetir contraseña</label>
+    <input type="password" name="confirm" minlength="8" required>
+    <button type="submit" style="margin-top:14px">Guardar contraseña</button>
+    <div class="status"></div>
+  `;
+
+  form.addEventListener("submit",async event => {
+    event.preventDefault();
+    const password = form.elements.password.value;
+    const confirmPassword = form.elements.confirm.value;
+    const status = form.querySelector(".status");
+
+    if(password !== confirmPassword) {
+      status.textContent = "Las contraseñas no coinciden.";
+      return;
     }
-  );
 
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
+    try {
+      await callFunction({
+        action:"reset_user_password",
+        target_user_id:user.user_id,
+        new_password:password
+      });
+      form.reset();
+      status.className = "status ok";
+      status.textContent = "Contraseña restablecida correctamente.";
+    } catch(err) {
+      status.textContent = err.message;
+    }
+  });
 
-  return data;
+  card.append(form);
 }
 
-async function resetUserPassword(userId, newPassword) {
-  const { data, error } = await client.functions.invoke(
-    "rapid-function",
-    {
-      body: {
-        action: "reset_user_password",
-        target_user_id: userId,
-        new_password: newPassword
-      }
+$("refreshUsers").addEventListener("click",loadUsers);
+
+$("createUserForm").addEventListener("submit",async event => {
+  event.preventDefault();
+
+  const values = {
+    action:"create_user",
+    full_name:$("newFullName").value.trim(),
+    username:$("newUsername").value.trim(),
+    password:$("newPassword").value,
+    role:$("newRole").value
+  };
+
+  try {
+    await callFunction(values);
+    $("createUserForm").reset();
+    setStatus("createStatus","Usuario creado correctamente.",true);
+    await loadUsers();
+  } catch(err) {
+    setStatus("createStatus",err.message);
+  }
+});
+
+async function checkSession() {
+  const {data} = await client.auth.getSession();
+  if(data.session) {
+    try {
+      await loadProfile(data.session.user);
+    } catch(err) {
+      $("message").textContent = err.message;
     }
-  );
-
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
-
-  return data;
+  }
 }
 
-    const loginSection = document.getElementById("login");
-    const dashboard = document.getElementById("dashboard");
-    const message = document.getElementById("message");
-
-    async function showDashboard(user) {
-      const { data, error } = await client
-        .from("profiles")
-        .select("full_name, username, role")
-        .eq("user_id", user.id)
-        .single();
-
-      if (error) {
-        message.textContent = "No se pudo cargar tu perfil.";
-        return;
-      }
-
-      loginSection.style.display = "none";
-      dashboard.style.display = "block";
-
-      document.getElementById("userName").textContent =
-        "Nombre: " + (data.full_name || data.username);
-
-      document.getElementById("userRole").textContent =
-        "Usuario: " + data.username + " | Rol: " + data.role;
-    }
-
-    document.getElementById("loginForm").addEventListener(
-      "submit",
-      async (event) => {
-        event.preventDefault();
-
-        message.textContent = "Comprobando acceso...";
-
-        const username = document
-          .getElementById("username")
-          .value
-          .trim()
-          .toLowerCase();
-
-        const password = document.getElementById("password").value;
-
-        const internalEmail = username.includes("@")
-  ? username
-  : username + "@kpi-empresa.invalid";
-        
-        const { data, error } = await client.auth.signInWithPassword({
-          email: internalEmail,
-          password: password
-        });
-
-        if (error) {
-          message.textContent =
-            "Usuario o contraseña incorrectos.";
-          return;
-        }
-
-        message.textContent = "";
-        await showDashboard(data.user);
-      }
-    );
-
-    document.getElementById("logout").addEventListener(
-      "click",
-      async () => {
-        await client.auth.signOut();
-
-        dashboard.style.display = "none";
-        loginSection.style.display = "block";
-
-        document.getElementById("password").value = "";
-        message.textContent = "Sesión cerrada.";
-      }
-    );
-
-    async function checkSession() {
-      const { data } = await client.auth.getSession();
-
-      if (data.session) {
-        await showDashboard(data.session.user);
-      }
-    }
-
-    checkSession();
-  </script>
+checkSession();
+</script>
 </body>
 </html>
