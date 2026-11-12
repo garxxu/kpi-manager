@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KPI Manager</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #101827;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    .panel {
+      width: min(90%, 400px);
+      padding: 35px;
+      border-radius: 16px;
+      background: #1d293b;
+      box-shadow: 0 15px 50px #0005;
+    }
+    h1 { margin-top: 0; }
+    p { color: #aab7c9; }
+    input, button {
+      width: 100%;
+      padding: 13px;
+      margin-top: 12px;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+    input {
+      background: #101827;
+      border: 1px solid #40506a;
+      color: white;
+    }
+    button {
+      border: 0;
+      background: #26b783;
+      color: #071b16;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button.secondary { background: #40506a; color: white; }
+    #message { font-size: 13px; margin-top: 15px; }
+    #dashboard { display: none; }
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <section id="login">
+      <h1>KPI Manager</h1>
+      <p>Accede a tu panel de rendimiento.</p>
+      <form id="loginForm">
+        <input id="email" type="email" placeholder="Correo electrónico" required>
+        <input id="password" type="password" placeholder="Contraseña" required>
+        <button type="submit">Iniciar sesión</button>
+      </form>
+      <div id="message"></div>
+    </section>
+
+    <section id="dashboard">
+      <h1>Bienvenido</h1>
+      <p id="userEmail"></p>
+      <p id="userRole"></p>
+      <button class="secondary" id="logout">Cerrar sesión</button>
+    </section>
+  </main>
+
+  <script>
+    // Sustituiremos estos dos valores por los de tu proyecto.
+    const SUPABASE_URL = "TU_PROJECT_URL";
+    const SUPABASE_KEY = "TU_PUBLISHABLE_KEY";
+
+    const client = supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+    const loginSection = document.getElementById("login");
+    const dashboard = document.getElementById("dashboard");
+    const message = document.getElementById("message");
+
+    async function showDashboard(user) {
+      loginSection.style.display = "none";
+      dashboard.style.display = "block";
+      document.getElementById("userEmail").textContent = user.email;
+
+      const { data, error } = await client
+        .from("profiles")
+        .select("full_name, role")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) {
+        document.getElementById("userRole").textContent =
+          "No se pudo cargar el perfil.";
+        return;
+      }
+
+      document.getElementById("userRole").textContent =
+        "Nombre: " + data.full_name + " | Rol: " + data.role;
+    }
+
+    document.getElementById("loginForm").addEventListener("submit",
+      async (event) => {
+        event.preventDefault();
+        message.textContent = "Comprobando acceso...";
+
+        const { data, error } = await client.auth.signInWithPassword({
+          email: document.getElementById("email").value,
+          password: document.getElementById("password").value
+        });
+
+        if (error) {
+          message.textContent = "Error: " + error.message;
+          return;
+        }
+
+        await showDashboard(data.user);
+      }
+    );
+
+    document.getElementById("logout").addEventListener("click",
+      async () => {
+        await client.auth.signOut();
+        dashboard.style.display = "none";
+        loginSection.style.display = "block";
+        message.textContent = "Sesión cerrada.";
+      }
+    );
+
+    async function checkSession() {
+      const { data } = await client.auth.getSession();
+      if (data.session) await showDashboard(data.session.user);
+    }
+
+    if (
+      SUPABASE_URL.startsWith("https://") &&
+      SUPABASE_KEY.length > 10
+    ) {
+      checkSession();
+    }
+  </script>
+</body>
+</html>
