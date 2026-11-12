@@ -249,15 +249,40 @@ $("loginForm").addEventListener("submit",async event => {
   }
 });
 
-$("logout").addEventListener("click",async() => {
+
+$("logout").addEventListener("click", async() => {
   await client.auth.signOut();
+
   currentUser = null;
   currentProfile = null;
+
+  // Ocultar y limpiar las secciones administrativas
+  $("usersTab").classList.add("hidden");
+  $("usersSection").classList.add("hidden");
+  $("usersList").innerHTML = "";
+  $("usersStatus").textContent = "";
+
+  // Restablecer la pestaña Mi cuenta
+  $("accountSection").classList.remove("hidden");
+  document.querySelectorAll("nav button").forEach(button => {
+    button.classList.toggle("active", button.dataset.tab === "account");
+  });
+
+  // Limpiar datos visibles de la cuenta anterior
+  $("headerName").textContent = "";
+  $("headerRole").textContent = "";
+  $("accountName").textContent = "";
+  $("accountUsername").textContent = "";
+  $("accountRole").textContent = "";
+
+  // Volver a la pantalla de acceso
   $("app").classList.add("hidden");
   $("login").classList.remove("hidden");
+  $("username").value = "";
   $("password").value = "";
   $("message").textContent = "Sesión cerrada.";
 });
+
 
 $("ownPasswordForm").addEventListener("submit",async event => {
   event.preventDefault();
