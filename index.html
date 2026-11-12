@@ -135,6 +135,41 @@
   return data;
 }
 
+    async function changeOwnPassword(newPassword) {
+  const { data, error } = await client.functions.invoke(
+    "rapid-function",
+    {
+      body: {
+        action: "change_own_password",
+        new_password: newPassword
+      }
+    }
+  );
+
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+
+  return data;
+}
+
+async function resetUserPassword(userId, newPassword) {
+  const { data, error } = await client.functions.invoke(
+    "rapid-function",
+    {
+      body: {
+        action: "reset_user_password",
+        target_user_id: userId,
+        new_password: newPassword
+      }
+    }
+  );
+
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+
+  return data;
+}
+
     const loginSection = document.getElementById("login");
     const dashboard = document.getElementById("dashboard");
     const message = document.getElementById("message");
