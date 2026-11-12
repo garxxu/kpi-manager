@@ -156,14 +156,10 @@
 
         const password = document.getElementById("password").value;
 
-        if (!/^[a-zA-Z0-9._-]{3,30}$/.test(username)) {
-          message.textContent = "Nombre de usuario no válido.";
-          return;
-        }
-
-        const internalEmail =
-          username + "@kpi-empresa.invalid";
-
+        const internalEmail = username.includes("@")
+  ? username
+  : username + "@kpi-empresa.invalid";
+        
         const { data, error } = await client.auth.signInWithPassword({
           email: internalEmail,
           password: password
