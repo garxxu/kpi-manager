@@ -115,6 +115,26 @@
       SUPABASE_KEY
     );
 
+    async function changeAdminUsername(username) {
+  const { data: { session } } = await client.auth.getSession();
+
+  if (!session) {
+    throw new Error("No hay una sesión activa.");
+  }
+
+  const { data, error } = await client.functions.invoke("rapid-function", {
+    body: {
+      action: "change_my_login",
+      username: username
+    }
+  });
+
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+
+  return data;
+}
+
     const loginSection = document.getElementById("login");
     const dashboard = document.getElementById("dashboard");
     const message = document.getElementById("message");
