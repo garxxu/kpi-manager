@@ -1096,7 +1096,218 @@ async function loadRanking() {
 }
 
 
+async function loadSummary() {
+  const content = $("summaryContent");
+  content.textContent = "Cargando resumen mensual...";
 
+  try {
+    const now = new Date();
+    const currentMonth =
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+    content.innerHTML = `
+      <div style="margin-bottom:24px">
+        <label for="summaryMonth">Mes del resumen</label>
+        <input id="summaryMonth" type="month" value="${currentMonth}">
+      </div>
+      <div id="summaryResults">Cargando...</div>
+    `;
+
+    const monthInput = $("summaryMonth");
+    const results = $("summaryResults");
+
+    const escapeHtml = value =>
+      String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]);
+
+    const number = value =>
+      Number(value).toLocaleString("es-ES", {
+        maximumFractionDigits: 2
+      });
+
+    const score = value =>
+      Number(value).toLocaleString("es-ES", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
+    function amount(value, unit) {
+      return unit === "€"
+        ? `${number(value)} €`
+        : `${number(value)} ${unit}`;
+    }
+
+    function comparison(current, previous) {
+      const difference = Number(current) - Number(previous);
+
+      if (difference > 0) {
+        return `<span style="color:#35c98a">▲ +${number(difference)} puntos</span>`;
+      }
+
+      if (difference < 0) {
+        return `<span style="color:#ff7777">▼ ${number(difference)} puntos</span>`;
+      }
+
+      return `<span class="small">Sin cambios</span>`;
+    }
+
+    async function refreshSummary() {
+      results.textContent = "Calculando resultados...";
+
+      const [year, month] = monthInput.value.split("-").map(Number);
+
+      const selectedDate = new Date(year, month - 1, 1);
+      const previousDate = new Date(year, month - 2, 1);
+
+      const currentKey =
+        `${year}-${String(month).padStart(2, "0")}-01`;
+
+      const previousKey =
+        `${previousDate.getFullYear()}-${String(previousDate.getMonth() + 1).padStart(2, "0")}-01`;
+
+      const [currentResponse, previousResponse] = await Promise.all([
+        client.rpc("get_monthly_summary", { p_month: currentKey }),
+        client.rpc("get_monthly_summary", { p_month: previousKey })
+      ]);
+
+      if (currentResponse.error) throw currentResponse.error;
+      if (previousResponse.error) throw previousResponse.error;
+
+      const current = currentResponse.data || [];
+      const previous = previousResponse.data || [];
+
+      const previousById = new Map(
+        previous.map(user => [user.employee_id, user])
+      );
+
+      const completed = current.filter(user => user.objectives_complete);
+
+      const average = completed.length
+        ? completed.reduce((sum, user) => sum + Number(user.ranking_score), 0) / completed.length
+        : 0;
+
+      const previousCompleted = previous.filter(user => user.objectives_complete);
+
+      const previousAverage = previousCompleted.length
+        ? previousCompleted.reduce((sum, user) => sum + Number(user.ranking_score), 0) / previousCompleted.length
+        : 0;
+
+      const cards = [
+        ["Empleados activos", current.length],
+        ["Objetivos completos", completed.length],
+        ["Media del ranking", `${score(average)} / 100`],
+        ["Variación de la media", comparison(average, previousAverage)]
+      ];
+
+      const cardsHtml = `
+        <div style="
+          display:grid;
+          grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+          gap:12px;
+          margin-bottom:28px
+        ">
+          ${cards.map(([label, value]) => `
+            <div style="
+              background:#17263a;
+              border:1px solid #34445a;
+              border-radius:12px;
+              padding:16px
+            ">
+              <div class="small">${label}</div>
+              <div style="font-size:22px;font-weight:800;margin-top:8px">
+                ${value}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+
+      const tableHtml = current.length ? `
+        <h3>Resultados individuales</h3>
+
+        <p class="small">
+          Comparación con el mes anterior en puntos porcentuales.
+        </p>
+
+        <div style="overflow-x:auto">
+          <table style="
+            width:100%;
+            min-width:1050px;
+            border-collapse:collapse;
+            text-align:left
+          ">
+            <thead>
+              <tr style="border-bottom:1px solid #34445a">
+                <th style="padding:12px">Empleado</th>
+                <th style="padding:12px">Garantías</th>
+                <th style="padding:12px">Financiación</th>
+                <th style="padding:12px">Protectores</th>
+                <th style="padding:12px">Ranking</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${current.map(user => {
+                const old = previousById.get(user.employee_id);
+
+                function cell(actual, target, pct, oldPct, unit) {
+                  const oldText = old
+                    ? comparison(pct, oldPct)
+                    : `<span class="small">Sin datos anteriores</span>`;
+
+                  return `
+                    <div>
+                      <strong>${number(pct)}%</strong>
+                      <div class="small">${amount(actual, unit)} / ${amount(target, unit)}</div>
+                      <div class="small" style="margin-top:5px">${oldText}</div>
+                    </div>
+                  `;
+                }
+
+                return `
+                  <tr style="border-bottom:1px solid #263449">
+                    <td style="padding:14px;font-weight:700">
+                      ${escapeHtml(user.full_name || user.username)}
+                    </td>
+                    <td style="padding:14px">
+                      ${cell(user.garantias_actual, user.garantias_target, user.garantias_pct, old?.garantias_pct ?? 0, "€")}
+                    </td>
+                    <td style="padding:14px">
+                      ${cell(user.financiacion_actual, user.financiacion_target, user.financiacion_pct, old?.financiacion_pct ?? 0, "€")}
+                    </td>
+                    <td style="padding:14px">
+                      ${cell(user.protectores_actual, user.protectores_target, user.protectores_pct, old?.protectores_pct ?? 0, "unidades")}
+                    </td>
+                    <td style="padding:14px">
+                      <strong style="color:#35c98a">${score(user.ranking_score)}</strong>
+                      <div class="small">sobre 100</div>
+                      <div class="small" style="margin-top:5px">
+                        ${old ? comparison(user.ranking_score, old.ranking_score) : "Sin datos anteriores"}
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      ` : `<p>No hay empleados activos.</p>`;
+
+      results.innerHTML = cardsHtml + tableHtml;
+    }
+
+    monthInput.addEventListener("change", refreshSummary);
+    await refreshSummary();
+
+  } catch (error) {
+    console.error("Error en loadSummary:", error);
+    content.textContent = "No se pudo cargar el resumen: " + error.message;
+  }
+}
 
 
 
