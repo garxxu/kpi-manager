@@ -243,6 +243,8 @@ $("targetsTab").classList.toggle("hidden", !isAdmin);
 
 showTab("dashboard");
 
+await loadDashboard();
+
 if(isAdmin) await loadUsers();
 }
 
