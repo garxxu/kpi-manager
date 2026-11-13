@@ -1049,89 +1049,247 @@ $("ownPasswordForm").addEventListener("submit",async event => {
   }
 });
 
+let currentUsersView = "active"; // "active" o "deleted"
+
+$("tabActiveUsers")?.addEventListener("click", () => {
+  currentUsersView = "active";
+  $("tabActiveUsers").className = "";
+  $("tabActiveUsers").classList.add("active");
+  $("tabDeletedUsers").className = "secondary";
+  $("usersList").classList.remove("hidden");
+  $("deletedUsersList").classList.add("hidden");
+});
+
+$("tabDeletedUsers")?.addEventListener("click", () => {
+  currentUsersView = "deleted";
+  $("tabDeletedUsers").className = "";
+  $("tabDeletedUsers").classList.add("active");
+  $("tabActiveUsers").className = "secondary";
+  $("deletedUsersList").classList.remove("hidden");
+  $("usersList").classList.add("hidden");
+});
+
 async function loadUsers() {
   $("usersList").textContent = "Cargando usuarios...";
+  $("deletedUsersList").textContent = "Cargando usuarios eliminados...";
   try {
-    const result = await callFunction({action:"list_users"});
-    $("usersList").innerHTML = "";
+    // 1. Obtener lista de usuarios de Auth y perfiles de Supabase
+    const [result, profilesRes] = await Promise.all([
+      callFunction({action:"list_users"}),
+      client.from("profiles").select("user_id,full_name,username,role,is_active,is_deleted,is_purged")
+    ]);
 
-    if(!result.users || result.users.length === 0) {
-      $("usersList").textContent = "Todavía no hay usuarios.";
-      return;
+    const profileMap = new Map((profilesRes.data || []).map(p => [p.user_id, p]));
+
+    $("usersList").innerHTML = "";
+    $("deletedUsersList").innerHTML = "";
+
+    const allUsers = (result.users || []).map(u => {
+      const prof = profileMap.get(u.user_id) || {};
+      return {
+        ...u,
+        is_deleted: Boolean(prof.is_deleted),
+        is_purged: Boolean(prof.is_purged)
+      };
+    }).filter(u => !u.is_purged);
+
+    const activeUsers = allUsers.filter(u => !u.is_deleted);
+    const deletedUsers = allUsers.filter(u => u.is_deleted);
+
+    $("deletedCount").textContent = deletedUsers.length;
+
+    // Renderizar Usuarios Activos
+    if (activeUsers.length === 0) {
+      $("usersList").textContent = "Todavía no hay usuarios activos.";
+    } else {
+      activeUsers.forEach(user => {
+        const card = document.createElement("div");
+        card.className = "user-card";
+
+        const top = document.createElement("div");
+        top.className = "user-top";
+
+        const info = document.createElement("div");
+        const name = document.createElement("strong");
+        name.textContent = user.full_name || user.username || "Sin nombre";
+        const detail = document.createElement("div");
+        detail.className = "small";
+        detail.textContent = "@" + (user.username || "") + " · " +
+          (user.role === "admin" ? "Administrador" : "Empleado");
+        info.append(name, detail);
+
+        const status = document.createElement("span");
+        status.className = "pill " + (user.is_active ? "green" : "red");
+        status.textContent = user.is_active ? "Activo" : "Desactivado";
+        top.append(info, status);
+        card.append(top);
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const edit = document.createElement("button");
+        edit.className = "secondary";
+        edit.textContent = "Editar";
+        edit.addEventListener("click", () => showEditForm(card, user));
+
+        const reset = document.createElement("button");
+        reset.className = "secondary";
+        reset.textContent = "Cambiar contraseña";
+        reset.addEventListener("click", () => showResetForm(card, user));
+
+        const toggle = document.createElement("button");
+        toggle.className = user.is_active ? "danger" : "secondary";
+        toggle.textContent = user.is_active ? "Desactivar" : "Activar";
+        toggle.disabled = user.user_id === currentUser.id && user.is_active;
+        toggle.addEventListener("click", async () => {
+          if (!confirm((user.is_active ? "¿Desactivar" : "Activar") +
+            " la cuenta de " + user.username + "?")) return;
+          try {
+            await callFunction({
+              action: "set_user_active",
+              target_user_id: user.user_id,
+              is_active: !user.is_active
+            });
+            await loadUsers();
+          } catch(err) {
+            setStatus("usersStatus", err.message);
+          }
+        });
+
+        const movements = document.createElement("button");
+        movements.className = "secondary";
+        movements.textContent = "Gestionar movimientos";
+        movements.addEventListener("click", () =>
+          showAdminMovementForm(card, user)
+        );
+
+        // Botón Eliminar Usuario (Eliminación definitiva de la lista activa conservando históricos)
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "danger";
+        deleteBtn.style.background = "#5c1d28";
+        deleteBtn.style.color = "#fecaca";
+        deleteBtn.textContent = "🗑️ Eliminar";
+        deleteBtn.disabled = user.user_id === currentUser.id;
+        deleteBtn.addEventListener("click", async () => {
+          const ok = confirm(
+            `¿Seguro que deseas eliminar definitivamente al usuario "${user.full_name || user.username}"?\n\n` +
+            `• El usuario no podrá iniciar sesión y desaparecerá de la lista activa de usuarios.\n` +
+            `• Sus registros históricos de ventas y movimientos se conservarán intactos.\n` +
+            `• Podrás restaurarlo en cualquier momento desde la pestaña "Usuarios eliminados".`
+          );
+          if (!ok) return;
+
+          setStatus("usersStatus", "Eliminando usuario...");
+          try {
+            const { error } = await client.rpc("delete_user_account", {
+              p_target_user_id: user.user_id
+            });
+            if (error) throw error;
+            setStatus("usersStatus", `Usuario "${user.full_name || user.username}" eliminado correctamente.`, true);
+            await loadUsers();
+          } catch(err) {
+            setStatus("usersStatus", "Error al eliminar: " + err.message);
+          }
+        });
+
+        actions.append(edit, reset, toggle, movements, deleteBtn);
+        card.append(actions);
+        $("usersList").append(card);
+      });
     }
 
-    result.users.forEach(user => {
-      const card = document.createElement("div");
-      card.className = "user-card";
+    // Renderizar Usuarios Eliminados
+    if (deletedUsers.length === 0) {
+      $("deletedUsersList").innerHTML = `
+        <div class="notice" style="margin-top:16px">No hay usuarios eliminados actualmente.</div>
+      `;
+    } else {
+      deletedUsers.forEach(user => {
+        const card = document.createElement("div");
+        card.className = "user-card";
+        card.style.background = "#1b212f";
+        card.style.borderColor = "#472731";
 
-      const top = document.createElement("div");
-      top.className = "user-top";
+        const top = document.createElement("div");
+        top.className = "user-top";
 
-      const info = document.createElement("div");
-      const name = document.createElement("strong");
-      name.textContent = user.full_name || user.username || "Sin nombre";
-      const detail = document.createElement("div");
-      detail.className = "small";
-      detail.textContent = "@" + (user.username || "") + " · " +
-        (user.role === "admin" ? "Administrador" : "Empleado");
-      info.append(name,detail);
+        const info = document.createElement("div");
+        const name = document.createElement("strong");
+        name.style.color = "#fca5a5";
+        name.textContent = user.full_name || user.username || "Sin nombre";
+        const detail = document.createElement("div");
+        detail.className = "small";
+        detail.textContent = "@" + (user.username || "") + " · " +
+          (user.role === "admin" ? "Administrador" : "Empleado") + " · (Eliminado)";
+        info.append(name, detail);
 
-      const status = document.createElement("span");
-      status.className = "pill " + (user.is_active ? "green" : "red");
-      status.textContent = user.is_active ? "Activo" : "Desactivado";
-      top.append(info,status);
-      card.append(top);
+        const status = document.createElement("span");
+        status.className = "pill red";
+        status.textContent = "Eliminado";
+        top.append(info, status);
+        card.append(top);
 
-      const actions = document.createElement("div");
-      actions.className = "actions";
+        const actions = document.createElement("div");
+        actions.className = "actions";
 
-      const edit = document.createElement("button");
-      edit.className = "secondary";
-      edit.textContent = "Editar";
-      edit.addEventListener("click",() => showEditForm(card,user));
+        // Botón Restaurar Usuario
+        const restoreBtn = document.createElement("button");
+        restoreBtn.style.background = "#145c47";
+        restoreBtn.style.color = "#a7f3d0";
+        restoreBtn.textContent = "♻️ Restaurar usuario";
+        restoreBtn.addEventListener("click", async () => {
+          if (!confirm(`¿Deseas restaurar la cuenta de "${user.full_name || user.username}" y devolverlo a usuarios activos?`)) return;
+          setStatus("usersStatus", "Restaurando usuario...");
+          try {
+            const { error } = await client.rpc("restore_user_account", {
+              p_target_user_id: user.user_id
+            });
+            if (error) throw error;
+            setStatus("usersStatus", `Usuario "${user.full_name || user.username}" restaurado correctamente.`, true);
+            await loadUsers();
+          } catch(err) {
+            setStatus("usersStatus", "Error al restaurar: " + err.message);
+          }
+        });
 
-      const reset = document.createElement("button");
-      reset.className = "secondary";
-      reset.textContent = "Cambiar contraseña";
-      reset.addEventListener("click",() => showResetForm(card,user));
+        // Botón Purgar Definitivo
+        const purgeBtn = document.createElement("button");
+        purgeBtn.className = "danger";
+        purgeBtn.textContent = "❌ Eliminar de esta lista";
+        purgeBtn.addEventListener("click", async () => {
+          const ok = confirm(
+            `¿Deseas eliminar definitivamente a "${user.full_name || user.username}" de la lista de eliminados?\n\n` +
+            `• Ya no aparecerá en la papelera ni en ninguna lista.\n` +
+            `• Sus datos numéricos históricos en tablas de ventas continuarán protegidos.`
+          );
+          if (!ok) return;
 
-      const toggle = document.createElement("button");
-      toggle.className = user.is_active ? "danger" : "secondary";
-      toggle.textContent = user.is_active ? "Desactivar" : "Activar";
-      toggle.disabled = user.user_id === currentUser.id && user.is_active;
-      toggle.addEventListener("click",async() => {
-        if(!confirm((user.is_active ? "¿Desactivar" : "Activar") +
-          " la cuenta de " + user.username + "?")) return;
-        try {
-          await callFunction({
-            action:"set_user_active",
-            target_user_id:user.user_id,
-            is_active:!user.is_active
-          });
-          await loadUsers();
-        } catch(err) {
-          setStatus("usersStatus",err.message);
-        }
+          setStatus("usersStatus", "Purgando usuario...");
+          try {
+            const { error } = await client.rpc("purge_deleted_user", {
+              p_target_user_id: user.user_id
+            });
+            if (error) throw error;
+            setStatus("usersStatus", "Usuario purgado de la lista definitivamente.", true);
+            await loadUsers();
+          } catch(err) {
+            setStatus("usersStatus", "Error al purgar: " + err.message);
+          }
+        });
+
+        actions.append(restoreBtn, purgeBtn);
+        card.append(actions);
+        $("deletedUsersList").append(card);
       });
+    }
 
-const movements = document.createElement("button");
-movements.className = "secondary";
-movements.textContent = "Gestionar movimientos";
-movements.addEventListener("click",() =>
-  showAdminMovementForm(card,user)
-);
-
-actions.append(edit,reset,toggle,movements);
-card.append(actions);
-$("usersList").append(card);
-    });
   } catch(err) {
     $("usersList").textContent = "";
-    setStatus("usersStatus",err.message);
+    $("deletedUsersList").textContent = "";
+    setStatus("usersStatus", err.message);
   }
 }
 
-  
 async function loadTargets() {
   const content = $("targetsContent");
   content.textContent = "Cargando configuración...";
