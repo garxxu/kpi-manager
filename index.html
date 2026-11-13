@@ -5,12 +5,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GruMMito</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 *{box-sizing:border-box}
 :root{color-scheme:dark}
-body{margin:0;background:#101827;color:#eef3fa;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+body{margin:0;background:#101827;color:#eef3fa;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
 button,input,select{font:inherit}
 button{cursor:pointer;border:0;border-radius:12px;padding:14px 20px;background:#26b783;color:#071b16;font-weight:700;font-size:15px;min-height:48px;display:inline-flex;align-items:center;justify-content:center;user-select:none;-webkit-tap-highlight-color:transparent;transition:transform .12s,background .2s,opacity .2s}
 button:active:not(:disabled){transform:scale(0.97)}
@@ -234,7 +237,7 @@ hr{border:0;border-top:1px solid #3b4e6d;margin:22px 0}
 .modal-close:hover{background:#334769}
 
 .profile-header{display:flex;align-items:center;gap:18px;margin-bottom:24px;flex-wrap:wrap}
-.profile-avatar{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#df0000,#790000);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;box-shadow:0 6px 16px rgba(223,0,0,0.35);flex-shrink:0;background-size:cover;background-position:center;overflow:hidden}
+.profile-avatar{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#26b783,#158055);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;box-shadow:0 6px 16px rgba(38,183,131,0.35);flex-shrink:0;background-size:cover;background-position:center;overflow:hidden}
 .avatar-upload-box{display:flex;align-items:center;gap:18px;margin-bottom:16px;flex-wrap:wrap}
 .avatar-preview{width:72px;height:72px;border-radius:50%;background:#23334a;border:2px dashed #475569;display:flex;align-items:center;justify-content:center;font-size:24px;background-size:cover;background-position:center;overflow:hidden;flex-shrink:0}
 .profile-titles{display:flex;flex-direction:column;gap:4px}
@@ -266,7 +269,12 @@ hr{border:0;border-top:1px solid #3b4e6d;margin:22px 0}
 .sidebar-close{background:#23334a;color:#cbd5e1;border:0;border-radius:50%;width:38px;height:38px;min-height:38px;padding:0;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 
 .sidebar-user{display:flex;align-items:center;gap:12px;padding:12px;background:#1a273b;border-radius:14px;margin-bottom:18px;border:1px solid #2d3f5a;cursor:pointer}
-.sidebar-user-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#df0000,#790000);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;background-size:cover;background-position:center;flex-shrink:0}
+.sidebar-user-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#26b783,#158055);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;background-size:cover;background-position:center;flex-shrink:0}
+/* Universal Circular Avatars */
+.user-avatar-circle{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#26b783,#158055);color:#ffffff;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background-size:cover;background-position:center;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.25);user-select:none;vertical-align:middle;border:1.5px solid rgba(255,255,255,0.12)}
+.user-avatar-circle.sm{width:28px;height:28px;font-size:11.5px}
+.user-avatar-circle.lg{width:44px;height:44px;font-size:16px}
+.user-avatar-circle.podium{width:48px;height:48px;font-size:18px;margin:0 auto 10px auto;display:flex;box-shadow:0 4px 14px rgba(38,183,131,0.35);border:2px solid rgba(38,183,131,0.4)}
 .sidebar-user-info{display:flex;flex-direction:column;overflow:hidden}
 .sidebar-user-name{font-weight:700;font-size:14.5px;color:#f8fafc;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
 .sidebar-user-role{font-size:12px;color:#94a3b8}
@@ -284,7 +292,8 @@ hr{border:0;border-top:1px solid #3b4e6d;margin:22px 0}
 .menu-toggle-btn:hover{background:#304360}
 .menu-toggle-btn svg{width:24px;height:24px;stroke:#f8fafc;fill:none}
 /* Interactive Clickable User Names */
-.user-link-btn{background:transparent;border:0;color:#38bdf8;font-weight:700;padding:4px 6px;margin:-4px -6px;cursor:pointer;text-align:left;font-size:inherit;display:inline-flex;align-items:center;gap:6px;border-radius:8px;text-decoration:underline;text-underline-offset:3px}
+.user-link-btn{background:transparent;border:0;color:#38bdf8;font-weight:700;padding:4px 6px;margin:-4px -6px;cursor:pointer;text-align:left;font-size:inherit;display:inline-flex;align-items:center;gap:6px;border-radius:8px;text-decoration:underline;text-underline-offset:3px;min-height:auto;transition:background .15s,color .15s}
+.user-link-btn:hover{background:rgba(56,189,248,0.15);color:#7dd3fc}
 .user-link-btn:hover{background:rgba(56,189,248,0.12)}
 .podium-user-btn{background:transparent;border:0;color:#f8fafc;font-size:17px;font-weight:700;cursor:pointer;padding:6px 10px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;text-decoration:underline;text-underline-offset:4px}
 .podium-user-btn:hover{background:rgba(255,255,255,0.08)}
@@ -532,6 +541,23 @@ hr{border:0;border-top:1px solid #3b4e6d;margin:22px 0}
 
 <script>
 // Helper global para sanitizar cadenas en HTML
+function getInitials(name) {
+  if (!name) return "GM";
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "GM";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function renderUserAvatarHtml(avatarUrl, name, sizeClass = "") {
+  const safeName = escapeHtml(name || "Usuario");
+  const inits = getInitials(name);
+  if (avatarUrl) {
+    return '<span class="user-avatar-circle ' + (sizeClass || '') + '" style="background-image:url(\'' + avatarUrl + '\');background-size:cover;background-position:center;color:transparent" title="' + safeName + '"></span>';
+  }
+  return '<span class="user-avatar-circle ' + (sizeClass || '') + '" title="' + safeName + '">' + inits + '</span>';
+}
+
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, function(char) {
     return {
@@ -569,7 +595,7 @@ async function callFunction(body) {
 async function loadProfile(user) {
   const {data,error} = await client
     .from("profiles")
-    .select("full_name,username,role,is_active,participates_in_ranking,avatar_url")
+    .select("full_name,username,role,is_active,participates_in_ranking,avatar_url,custom_title")
     .eq("user_id",user.id)
     .single();
 
@@ -1313,7 +1339,7 @@ async function loadUsers() {
     // 1. Obtener lista de usuarios de Auth y perfiles de Supabase
     const [result, profilesRes] = await Promise.all([
       callFunction({action:"list_users"}),
-      client.from("profiles").select("user_id,full_name,username,role,is_active,is_deleted,is_purged")
+      client.from("profiles").select("user_id,full_name,username,role,is_active,is_deleted,is_purged,avatar_url,custom_title,participates_in_ranking")
     ]);
 
     const profileMap = new Map((profilesRes.data || []).map(p => [p.user_id, p]));
@@ -1325,6 +1351,9 @@ async function loadUsers() {
       const prof = profileMap.get(u.user_id) || {};
       return {
         ...u,
+        avatar_url: prof.avatar_url,
+        custom_title: prof.custom_title,
+        participates_in_ranking: Boolean(prof.participates_in_ranking),
         is_deleted: Boolean(prof.is_deleted),
         is_purged: Boolean(prof.is_purged)
       };
@@ -1346,14 +1375,51 @@ async function loadUsers() {
         const top = document.createElement("div");
         top.className = "user-top";
 
+        const userMeta = document.createElement("div");
+        userMeta.style.display = "flex";
+        userMeta.style.alignItems = "center";
+        userMeta.style.gap = "14px";
+
+        const avatarWrapper = document.createElement("div");
+        avatarWrapper.innerHTML = renderUserAvatarHtml(user.avatar_url, user.full_name || user.username, "lg");
+        avatarWrapper.style.cursor = "pointer";
+        avatarWrapper.title = "Clic para ver perfil de " + (user.full_name || user.username || "usuario");
+        avatarWrapper.addEventListener("click", () => {
+          openUserProfile(user.user_id, user.full_name || user.username);
+        });
+
         const info = document.createElement("div");
-        const name = document.createElement("strong");
-        name.textContent = user.full_name || user.username || "Sin nombre";
+        const nameBtn = document.createElement("button");
+        nameBtn.type = "button";
+        nameBtn.className = "user-link-btn";
+        nameBtn.style.padding = "2px 4px";
+        nameBtn.style.fontSize = "16px";
+        nameBtn.style.fontWeight = "700";
+        nameBtn.title = "Clic para ver perfil de " + (user.full_name || user.username || "usuario");
+        nameBtn.textContent = user.full_name || user.username || "Sin nombre";
+        nameBtn.addEventListener("click", () => {
+          openUserProfile(user.user_id, user.full_name || user.username);
+        });
+
         const detail = document.createElement("div");
         detail.className = "small";
+        detail.style.marginTop = "3px";
         detail.textContent = "@" + (user.username || "") + " · " +
           (user.role === "admin" ? "Administrador" : "Empleado");
-        info.append(name, detail);
+
+        if (user.custom_title) {
+          const titleBadge = document.createElement("div");
+          titleBadge.style.fontSize = "12px";
+          titleBadge.style.color = "#38bdf8";
+          titleBadge.style.fontStyle = "italic";
+          titleBadge.style.marginTop = "2px";
+          titleBadge.textContent = "✨ " + user.custom_title;
+          info.append(nameBtn, titleBadge, detail);
+        } else {
+          info.append(nameBtn, detail);
+        }
+
+        userMeta.append(avatarWrapper, info);
 
         const status = document.createElement("span");
         status.className = "pill " + (user.is_active ? "green" : "red");
@@ -1450,15 +1516,42 @@ async function loadUsers() {
         const top = document.createElement("div");
         top.className = "user-top";
 
+        const userMeta = document.createElement("div");
+        userMeta.style.display = "flex";
+        userMeta.style.alignItems = "center";
+        userMeta.style.gap = "14px";
+
+        const avatarWrapper = document.createElement("div");
+        avatarWrapper.innerHTML = renderUserAvatarHtml(user.avatar_url, user.full_name || user.username, "lg");
+        avatarWrapper.style.cursor = "pointer";
+        avatarWrapper.style.opacity = "0.75";
+        avatarWrapper.title = "Clic para ver perfil de " + (user.full_name || user.username || "usuario");
+        avatarWrapper.addEventListener("click", () => {
+          openUserProfile(user.user_id, user.full_name || user.username);
+        });
+
         const info = document.createElement("div");
-        const name = document.createElement("strong");
-        name.style.color = "#fca5a5";
-        name.textContent = user.full_name || user.username || "Sin nombre";
+        const nameBtn = document.createElement("button");
+        nameBtn.type = "button";
+        nameBtn.className = "user-link-btn";
+        nameBtn.style.padding = "2px 4px";
+        nameBtn.style.fontSize = "16px";
+        nameBtn.style.fontWeight = "700";
+        nameBtn.style.color = "#fca5a5";
+        nameBtn.title = "Clic para ver perfil de " + (user.full_name || user.username || "usuario");
+        nameBtn.textContent = user.full_name || user.username || "Sin nombre";
+        nameBtn.addEventListener("click", () => {
+          openUserProfile(user.user_id, user.full_name || user.username);
+        });
+
         const detail = document.createElement("div");
         detail.className = "small";
+        detail.style.marginTop = "3px";
         detail.textContent = "@" + (user.username || "") + " · " +
           (user.role === "admin" ? "Administrador" : "Empleado") + " · (Eliminado)";
-        info.append(name, detail);
+        info.append(nameBtn, detail);
+
+        userMeta.append(avatarWrapper, info);
 
         const status = document.createElement("span");
         status.className = "pill red";
@@ -1914,11 +2007,25 @@ async function loadRanking() {
     async function refreshRanking() {
       results.textContent = "Calculando clasificación...";
 
-      const { data, error } = await client.rpc("get_team_ranking", {
-        p_month: monthInput.value + "-01"
-      });
+      const [rankingRes, profilesRes] = await Promise.all([
+        client.rpc("get_team_ranking", {
+          p_month: monthInput.value + "-01"
+        }),
+        client.from("profiles").select("user_id, avatar_url, custom_title")
+      ]);
 
-      if (error) throw error;
+      if (rankingRes.error) throw rankingRes.error;
+
+      const profileMap = new Map((profilesRes.data || []).map(p => [p.user_id, p]));
+      const rawData = rankingRes.data || [];
+      const data = rawData.map(u => {
+        const p = profileMap.get(u.employee_id || u.user_id) || {};
+        return {
+          ...u,
+          avatar_url: p.avatar_url,
+          custom_title: p.custom_title
+        };
+      });
 
       const completed = data
         .filter(user => user.objectives_complete)
@@ -1956,9 +2063,13 @@ async function loadRanking() {
                 </div>
 
                 <div style="margin-bottom:12px;overflow-wrap:anywhere">
+                  ${renderUserAvatarHtml(user.avatar_url, user.full_name || user.username, "podium")}
                   <button type="button" class="podium-user-btn" onclick="openUserProfile('${user.employee_id || user.user_id}', '${escapeHtml(user.full_name || user.username)}', $('rankingMonth').value)">
-                    👤 ${escapeHtml(user.full_name || user.username)}
+                    ${escapeHtml(user.full_name || user.username)}
                   </button>
+                  ${user.custom_title ? `
+                    <div style="font-size:12px;opacity:0.75;font-weight:600;color:#7dd3fc;margin-top:2px;font-style:italic">✨ ${escapeHtml(user.custom_title)}</div>
+                  ` : ''}
                 </div>
 
                 <div style="
@@ -2021,7 +2132,11 @@ async function loadRanking() {
 
                   <td style="padding:14px;font-weight:600">
                     <button type="button" class="user-link-btn" onclick="openUserProfile('${user.employee_id || user.user_id}', '${escapeHtml(user.full_name || user.username)}', $('rankingMonth').value)">
-                      👤 ${escapeHtml(user.full_name || user.username)}
+                      ${renderUserAvatarHtml(user.avatar_url, user.full_name || user.username, "sm")}
+                      <span>${escapeHtml(user.full_name || user.username)}</span>
+                      ${user.custom_title ? `
+                        <span style="font-size:12px;opacity:0.65;font-weight:500;font-style:italic;color:#94a3b8;margin-left:6px;letter-spacing:0.2px">· ${escapeHtml(user.custom_title)}</span>
+                      ` : ''}
                     </button>
                   </td>
 
@@ -2071,7 +2186,13 @@ async function loadRanking() {
 
           ${pending.map(user => `
             <div style="padding:10px 0;border-top:1px solid #263449;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-              <span>${escapeHtml(user.full_name || user.username)}</span>
+              <span style="display:inline-flex;align-items:center;gap:10px">
+                ${renderUserAvatarHtml(user.avatar_url, user.full_name || user.username, "sm")}
+                <span>${escapeHtml(user.full_name || user.username)}</span>
+                ${user.custom_title ? `
+                  <span style="font-size:12px;opacity:0.65;font-style:italic;color:#94a3b8;margin-left:6px">· ${escapeHtml(user.custom_title)}</span>
+                ` : ''}
+              </span>
               <span style="color:#60a5fa;font-size:13.5px">Comisión acum.: <strong>${money(calcCommission(user))}</strong></span>
             </div>
           `).join("")}
@@ -2580,6 +2701,8 @@ function showEditForm(card,user) {
       <option value="employee">Empleado</option>
       <option value="admin">Administrador</option>
     </select>
+    <label>Título honorífico / Distinción</label>
+    <input name="custom_title" placeholder="Ej: Guardiana de la financiación" maxlength="60">
     <label class="touch-toggle-card">
       <div class="toggle-info">
         <span class="toggle-title">Participa en el ranking</span>
@@ -2597,6 +2720,7 @@ function showEditForm(card,user) {
   form.elements.full_name.value = user.full_name || "";
   form.elements.username.value = user.username || "";
   form.elements.role.value = user.role;
+  if (form.elements.custom_title) form.elements.custom_title.value = user.custom_title || "";
   form.elements.participates_in_ranking.checked =
     Boolean(user.participates_in_ranking);
 
@@ -2620,6 +2744,12 @@ function showEditForm(card,user) {
 
     try {
       await callFunction(values);
+      if (form.elements.custom_title) {
+        await client.rpc("update_user_custom_title", {
+          p_target_user_id: user.user_id,
+          p_custom_title: form.elements.custom_title.value.trim()
+        });
+      }
       await loadUsers();
       setStatus("usersStatus","Usuario actualizado correctamente.",true);
     } catch(err) {
@@ -2725,7 +2855,7 @@ async function openUserProfile(userId, fallbackName, initialMonth = null) {
     // 1. Fetch profile info
     const { data: profile, error: profileErr } = await client
       .from("profiles")
-      .select("user_id,full_name,username,role,is_active,participates_in_ranking,avatar_url")
+      .select("user_id,full_name,username,role,is_active,participates_in_ranking,avatar_url,custom_title")
       .eq("user_id", userId)
       .single();
 
@@ -2803,7 +2933,30 @@ async function openUserProfile(userId, fallbackName, initialMonth = null) {
         <div class="profile-avatar" style="${profile?.avatar_url ? `background-image:url('${profile.avatar_url}');background-size:cover;background-position:center;color:transparent;` : ''}">${profile?.avatar_url ? '' : initials}</div>
         <div class="profile-titles">
           <h2>${escapeHtml(name)}</h2>
-          <div class="profile-meta">
+          <div id="profileCustomTitleRow" style="margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            ${profile?.custom_title ? `
+              <span id="profileCustomTitleText" style="font-size:14.5px;font-weight:600;color:#38bdf8;font-style:italic;display:inline-flex;align-items:center;gap:4px">
+                ✨ ${escapeHtml(profile.custom_title)}
+              </span>
+            ` : `
+              <span id="profileCustomTitleText" style="display:none"></span>
+            `}
+            ${(currentProfile?.role === "admin") ? `
+              <button type="button" id="btnEditTitleModal" style="background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);color:#7dd3fc;padding:3px 10px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;min-height:auto;line-height:1.2;display:inline-flex;align-items:center;gap:4px">
+                ${profile?.custom_title ? "✏️ Cambiar título" : "+ Asignar título"}
+              </button>
+            ` : ''}
+          </div>
+          <div id="editTitleBox" class="hidden" style="margin-top:8px;background:#131f31;border:1px solid #334460;padding:12px;border-radius:12px;max-width:380px">
+            <label style="font-size:12px;color:#94a3b8;font-weight:600">Título para este usuario (visible para todos):</label>
+            <input id="inputCustomTitle" maxlength="60" placeholder="Ej: Guardiana de la financiación" value="${escapeHtml(profile?.custom_title || '')}" style="min-height:38px;padding:8px 12px;font-size:14px;margin-top:4px">
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button type="button" id="btnSaveTitleModal" style="padding:6px 14px;min-height:36px;font-size:13px">Guardar</button>
+              <button type="button" id="btnCancelTitleModal" class="secondary" style="padding:6px 14px;min-height:36px;font-size:13px">Cancelar</button>
+            </div>
+            <div id="titleSaveStatus" class="status" style="margin-top:6px;font-size:12px"></div>
+          </div>
+          <div class="profile-meta" style="margin-top:6px">
             <span class="small" style="color:#94a3b8">@${escapeHtml(profile?.username || "")}</span>
             <span class="pill ${profile?.role === "admin" ? "red" : ""}">${profile?.role === "admin" ? "Administrador" : "Empleado"}</span>
             <span class="pill ${profile?.is_active ? "green" : "red"}">${profile?.is_active ? "Activo" : "Inactivo"}</span>
@@ -2880,6 +3033,60 @@ async function openUserProfile(userId, fallbackName, initialMonth = null) {
     $("modalMonthSelect").addEventListener("change", e => {
       openUserProfile(userId, fallbackName, e.target.value);
     });
+
+    const btnEditTitle = $("btnEditTitleModal");
+    if (btnEditTitle) {
+      const box = $("editTitleBox");
+      const input = $("inputCustomTitle");
+      const status = $("titleSaveStatus");
+      const btnSave = $("btnSaveTitleModal");
+      const btnCancel = $("btnCancelTitleModal");
+      const titleText = $("profileCustomTitleText");
+
+      btnEditTitle.addEventListener("click", () => {
+        box.classList.remove("hidden");
+        btnEditTitle.classList.add("hidden");
+        input.focus();
+      });
+
+      btnCancel.addEventListener("click", () => {
+        box.classList.add("hidden");
+        btnEditTitle.classList.remove("hidden");
+        status.textContent = "";
+      });
+
+      btnSave.addEventListener("click", async () => {
+        status.textContent = "Guardando título...";
+        status.className = "status";
+        const newTitle = input.value.trim();
+        try {
+          const { error } = await client.rpc("update_user_custom_title", {
+            p_target_user_id: userId,
+            p_custom_title: newTitle
+          });
+          if (error) throw error;
+          profile.custom_title = newTitle || null;
+          if (newTitle) {
+            titleText.innerHTML = "✨ " + escapeHtml(newTitle);
+            titleText.style.display = "inline-flex";
+            btnEditTitle.textContent = "✏️ Cambiar título";
+          } else {
+            titleText.innerHTML = "";
+            titleText.style.display = "none";
+            btnEditTitle.textContent = "+ Asignar título";
+          }
+          box.classList.add("hidden");
+          btnEditTitle.classList.remove("hidden");
+          status.textContent = "";
+          if (typeof loadUsers === "function") {
+            loadUsers();
+          }
+        } catch(err) {
+          status.textContent = err.message;
+          status.className = "status error";
+        }
+      });
+    }
 
   } catch (err) {
     container.innerHTML = `<div class="status error">Error al cargar perfil: ${err.message}</div>`;
