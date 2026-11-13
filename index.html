@@ -251,6 +251,7 @@ if(isAdmin) {
 }
 }
 
+
 function showTab(tab) {
   document.querySelectorAll("nav button").forEach(b => {
     b.classList.toggle("active", b.dataset.tab === tab);
@@ -261,7 +262,12 @@ function showTab(tab) {
   $("targetsSection").classList.toggle("hidden", tab !== "targets");
   $("accountSection").classList.toggle("hidden", tab !== "account");
   $("usersSection").classList.toggle("hidden", tab !== "users");
+
+  if (tab === "ranking" && currentUser) {
+    loadRanking();
+  }
 }
+
 
   
 
