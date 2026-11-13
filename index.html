@@ -431,7 +431,7 @@ ${currentProfile.participates_in_ranking ? `
               <input
                 id="movement-amount-${kpi.id}"
                 type="number"
-                min="0.01"
+                
                 step="0.01"
                 placeholder="Introduce una cantidad"
               >
@@ -489,12 +489,13 @@ ${currentProfile.participates_in_ranking ? `
         const operation = button.dataset.operation;
         const amountInput = $(`movement-amount-${kpiId}`);
         const status = $(`movement-status-${kpiId}`);
-        const amount = Number(amountInput.value);
+        let amount = Number(amountInput.value);
 
-        if (!Number.isFinite(amount) || amount <= 0) {
-          status.textContent = "Introduce una cantidad mayor que cero.";
+        if (!Number.isFinite(amount) || amount === 0) {
+          status.textContent = "Introduce una cantidad diferente de cero.";
           return;
         }
+        amount = Math.abs(amount);
 
         button.disabled = true;
         status.textContent = "Guardando movimiento...";
@@ -1393,7 +1394,7 @@ async function showAdminMovementForm(card,user) {
     </select>
 
     <label>Cantidad</label>
-    <input type="number" name="amount" min="0.01" step="0.01" required>
+    <input type="number" name="amount" step="0.01" required>
 
     <button type="submit" style="margin-top:14px">
       Guardar movimiento
@@ -1487,12 +1488,13 @@ async function showAdminMovementForm(card,user) {
     form.addEventListener("submit",async event => {
       event.preventDefault();
 
-      const amount = Number(form.elements.amount.value);
+      let amount = Number(form.elements.amount.value);
 
-      if(!Number.isFinite(amount) || amount <= 0) {
-        status.textContent = "Introduce una cantidad mayor que cero.";
+      if(!Number.isFinite(amount) || amount === 0) {
+        status.textContent = "Introduce una cantidad diferente de cero.";
         return;
       }
+      amount = Math.abs(amount);
 
       status.textContent = "Guardando movimiento...";
 
