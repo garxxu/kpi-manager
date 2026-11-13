@@ -649,6 +649,164 @@ async function loadUsers() {
   }
 }
 
+  
+async function loadTargets() {
+  const content = $("targetsContent");
+  content.textContent = "Cargando configuración...";
+
+  try {
+    const [usersResult, definitionsResult] = await Promise.all([
+      callFunction({ action: "list_users" }),
+
+      client.from("kpi_definitions")
+        .select("id,name,unit")
+        .eq("active", true)
+    ]);
+
+    if (definitionsResult.error) throw definitionsResult.error;
+
+    const employees = (usersResult.users || [])
+      .filter(user => user.role === "employee");
+
+    const kpis = ["Venta", "NPS", "Garantías", "Financiación", "Protectores"]
+      .map(name => definitionsResult.data.find(kpi => kpi.name === name))
+      .filter(Boolean);
+
+    if (employees.length === 0) {
+      content.textContent = "No hay empleados registrados.";
+      return;
+    }
+
+    const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[char]);
+
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+    content.innerHTML = `
+      <div class="card">
+        <label for="targetEmployee">Empleado</label>
+        <select id="targetEmployee">
+          ${employees.map(user => `
+            <option value="${escapeHtml(user.user_id)}">
+              ${escapeHtml(user.full_name || user.username)}
+              ${user.is_active ? "" : "(Desactivado)"}
+            </option>
+          `).join("")}
+        </select>
+
+        <label for="targetMonth" style="margin-top:16px">Mes</label>
+        <input id="targetMonth" type="month" value="${currentMonth}">
+
+        <div id="targetFields" style="margin-top:20px"></div>
+
+        <button id="saveTargets" style="margin-top:20px">
+          Guardar los cinco objetivos
+        </button>
+
+        <div id="targetsStatus" class="status"></div>
+      </div>
+    `;
+
+    const employeeSelect = $("targetEmployee");
+    const monthInput = $("targetMonth");
+    const fields = $("targetFields");
+    const status = $("targetsStatus");
+
+    async function loadSelectedTargets() {
+      fields.textContent = "Cargando objetivos...";
+      status.textContent = "";
+
+      const month = monthInput.value + "-01";
+
+      const { data, error } = await client
+        .from("monthly_targets")
+        .select("kpi_id,target")
+        .eq("employee_id", employeeSelect.value)
+        .eq("month", month);
+
+      if (error) throw error;
+
+      const values = Object.fromEntries(
+        data.map(item => [item.kpi_id, Number(item.target)])
+      );
+
+      fields.innerHTML = kpis.map(kpi => `
+        <div style="margin-bottom:16px">
+          <label for="target-${kpi.id}">
+            ${escapeHtml(kpi.name)} (${escapeHtml(kpi.unit)})
+          </label>
+          <input
+            id="target-${kpi.id}"
+            type="number"
+            min="0"
+            step="0.01"
+            value="${values[kpi.id] ?? 0}"
+            required
+          >
+        </div>
+      `).join("");
+    }
+
+    employeeSelect.addEventListener("change", loadSelectedTargets);
+    monthInput.addEventListener("change", loadSelectedTargets);
+
+    $("saveTargets").addEventListener("click", async () => {
+      if (!employeeSelect.value || !monthInput.value) {
+        status.textContent = "Selecciona un empleado y un mes.";
+        return;
+      }
+
+      const records = kpis.map(kpi => ({
+        employee_id: employeeSelect.value,
+        kpi_id: kpi.id,
+        month: monthInput.value + "-01",
+        target: Number($(`target-${kpi.id}`).value)
+      }));
+
+      if (records.some(record =>
+        !Number.isFinite(record.target) || record.target < 0
+      )) {
+        status.textContent = "Revisa los objetivos introducidos.";
+        return;
+      }
+
+      const saveButton = $("saveTargets");
+      saveButton.disabled = true;
+      status.textContent = "Guardando objetivos...";
+
+      try {
+        const { error } = await client
+          .from("monthly_targets")
+          .upsert(records, {
+            onConflict: "employee_id,kpi_id,month"
+          });
+
+        if (error) throw error;
+
+        status.textContent = "Los cinco objetivos se han guardado correctamente.";
+        await loadDashboard();
+      } catch (error) {
+        status.textContent = "Error al guardar: " + error.message;
+      } finally {
+        saveButton.disabled = false;
+      }
+    });
+
+    await loadSelectedTargets();
+
+  } catch (error) {
+    console.error("Error en loadTargets:", error);
+    content.textContent = "No se pudo cargar la configuración: " + error.message;
+  }
+}
+
+
 function showEditForm(card,user) {
   const old = card.querySelector(".edit-form");
   if(old) { old.remove(); return; }
