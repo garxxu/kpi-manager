@@ -24,7 +24,136 @@ input:focus,select:focus{border-color:#26b783;box-shadow:0 0 0 3px rgba(38,183,1
 
 select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;background-size:18px;padding-right:46px;cursor:pointer}
 
-input[type="date"],input[type="month"]{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'%3E%3C/path%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;background-size:22px;padding-right:48px}
+/* ========================================================
+   DATE & MONTH INPUTS - MODERN DARK UI STYLING
+   ======================================================== */
+.date-control-container,
+.date-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+@media(min-width: 600px) {
+  .date-control-group.inline {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+.date-control-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-top: 0;
+  user-select: none;
+}
+
+.date-control-label .date-icon {
+  font-size: 15px;
+}
+
+/* Universal input[type="date"] and input[type="month"] */
+input[type="date"],
+input[type="month"],
+.custom-date-input {
+  width: 100%;
+  position: relative;
+  background: linear-gradient(180deg, #162438 0%, #101a29 100%);
+  border: 1.5px solid #334460;
+  border-radius: 14px;
+  color: #f1f5f9;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 12px 18px;
+  min-height: 48px;
+  outline: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.1s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="date"]:hover,
+input[type="month"]:hover,
+.custom-date-input:hover {
+  border-color: #475d80;
+  background: linear-gradient(180deg, #1b2d46 0%, #132135 100%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+input[type="date"]:focus,
+input[type="month"]:focus,
+.custom-date-input:focus {
+  border-color: #26b783;
+  background: #111c2e;
+  box-shadow: 0 0 0 3px rgba(38, 183, 131, 0.28), 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Style WebKit/Blink calendar picker icon into Emerald accent */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 6px;
+  margin-right: -4px;
+  filter: invert(0.8) sepia(100%) hue-rotate(105deg) brightness(1.25) saturate(2.2);
+  opacity: 0.9;
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="month"]::-webkit-calendar-picker-indicator:hover {
+  transform: scale(1.18);
+  opacity: 1;
+}
+
+/* Inner datetime fields in Webkit */
+input[type="date"]::-webkit-datetime-edit,
+input[type="month"]::-webkit-datetime-edit {
+  color: #f1f5f9;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 0 4px;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="month"]::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="month"]::-webkit-datetime-edit-text {
+  color: #64748b;
+  padding: 0 4px;
+  font-weight: 500;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field,
+input[type="month"]::-webkit-datetime-edit-month-field,
+input[type="month"]::-webkit-datetime-edit-year-field {
+  color: #f8fafc;
+  font-weight: 700;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field:focus,
+input[type="date"]::-webkit-datetime-edit-day-field:focus,
+input[type="date"]::-webkit-datetime-edit-year-field:focus,
+input[type="month"]::-webkit-datetime-edit-month-field:focus,
+input[type="month"]::-webkit-datetime-edit-year-field:focus {
+  background: #26b783;
+  color: #071b16;
+}
 
 label{display:block;color:#94a3b8;font-size:13.5px;font-weight:600;margin-top:16px}
 h1,h2,h3{margin-top:0}
@@ -834,14 +963,17 @@ async function loadDashboard(selectedDate = null, forcedMonth = null) {
           <h3 style="margin:0;text-transform:capitalize;font-size:20px">${monthFormattedName}</h3>
           ${!isCurrentMonth ? '<span class="pill" style="margin-top:6px;display:inline-block">📜 Modo histórico (mes cerrado)</span>' : ''}
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <label for="dashboardMonthPicker" style="margin:0;font-size:13px;white-space:nowrap">Consultar mes:</label>
+        <div class="date-control-group inline" style="margin:0">
+          <label for="dashboardMonthPicker" class="date-control-label" style="white-space:nowrap">
+            <span class="date-icon">📅</span>
+            <span>Consultar mes:</span>
+          </label>
           <input
             id="dashboardMonthPicker"
             type="month"
             value="${selectedDashboardMonth}"
             max="${actualCurrentMonthKey}"
-            style="width:auto;margin:0;min-height:44px;padding:8px 36px 8px 14px;font-size:14.5px"
+            style="width:auto;min-width:180px;margin:0"
           >
         </div>
       </div>
@@ -853,7 +985,10 @@ ${currentProfile.participates_in_ranking ? `
     <h2>Movimientos diarios</h2>
         <p>${isCurrentMonth ? "Añade o resta cantidades de forma independiente para cada KPI." : "Visualiza los movimientos registrados en las fechas de este mes histórico."}</p>
 
-        <label>Fecha del movimiento</label>
+        <label for="movementDate" class="date-control-label" style="margin-top:16px;margin-bottom:6px">
+          <span class="date-icon">📅</span>
+          <span>Fecha del movimiento</span>
+        </label>
         <input
           id="movementDate"
           type="date"
@@ -1434,7 +1569,10 @@ async function loadTargets() {
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
           <div>
-            <label for="targetMonth">Mes a configurar</label>
+            <label for="targetMonth" class="date-control-label" style="margin-bottom:8px">
+              <span class="date-icon">📅</span>
+              <span>Mes a configurar</span>
+            </label>
             <input id="targetMonth" type="month" value="${currentMonthKey}" min="${currentMonthKey}">
           </div>
           <div>
@@ -1653,7 +1791,10 @@ async function loadRanking() {
 
     content.innerHTML = `
       <div style="margin-bottom:24px">
-        <label for="rankingMonth">Mes del ranking</label>
+        <label for="rankingMonth" class="date-control-label" style="margin-bottom:8px">
+          <span class="date-icon">📅</span>
+          <span>Mes del ranking</span>
+        </label>
         <input id="rankingMonth" type="month" value="${currentMonth}">
       </div>
       <div id="rankingResults">Cargando...</div>
@@ -1965,12 +2106,18 @@ async function loadSummary() {
   margin-bottom:24px
 ">
   <div>
-    <label for="summaryMonth">Mes principal</label>
+    <label for="summaryMonth" class="date-control-label" style="margin-bottom:8px">
+      <span class="date-icon">📅</span>
+      <span>Mes principal</span>
+    </label>
     <input id="summaryMonth" type="month" value="${currentMonth}">
   </div>
 
   <div>
-    <label for="comparisonMonth">Comparar con</label>
+    <label for="comparisonMonth" class="date-control-label" style="margin-bottom:8px">
+      <span class="date-icon">📅</span>
+      <span>Comparar con</span>
+    </label>
     <input id="comparisonMonth" type="month" value="${currentMonth}">
   </div>
 </div>
@@ -2206,7 +2353,10 @@ async function showAdminMovementForm(card,user) {
     <label>Indicador</label>
     <select name="kpi" required></select>
 
-    <label>Fecha del movimiento</label>
+    <label class="date-control-label" style="margin-top:16px;margin-bottom:6px">
+      <span class="date-icon">📅</span>
+      <span>Fecha del movimiento</span>
+    </label>
     <input type="date" name="entry_date" required>
 
     <label>Operación</label>
@@ -2683,7 +2833,12 @@ async function openUserProfile(userId, fallbackName, initialMonth = null) {
       <div style="margin-top:20px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
           <h3 style="margin:0;font-size:17px">📊 Estadísticas del mes</h3>
-          <input type="month" id="modalMonthSelect" value="${currentMonthKey}" style="width:auto;min-height:40px;padding:8px 36px 8px 12px;font-size:14px">
+          <div class="date-control-group inline" style="margin:0">
+            <label for="modalMonthSelect" class="date-control-label" style="white-space:nowrap">
+              <span class="date-icon">📅</span>
+            </label>
+            <input type="month" id="modalMonthSelect" value="${currentMonthKey}" style="width:auto;min-width:170px;margin:0">
+          </div>
         </div>
 
         ${userStats ? `
@@ -2736,6 +2891,13 @@ function closeUserProfile() {
 window.addEventListener("click", e => {
   if (e.target === $("userProfileModal")) {
     closeUserProfile();
+  }
+  // Abrir selector nativo al pulsar en cualquier parte del campo de fecha o mes
+  const dateInput = e.target?.matches?.('input[type="date"], input[type="month"]')
+    ? e.target
+    : e.target?.closest?.('input[type="date"], input[type="month"]');
+  if (dateInput && typeof dateInput.showPicker === "function") {
+    try { dateInput.showPicker(); } catch (_) {}
   }
 });
 </script>
