@@ -809,6 +809,116 @@ async function loadTargets() {
   }
 }
 
+  
+async function loadRanking() {
+  const content = $("rankingContent");
+  content.textContent = "Calculando ranking...";
+
+  try {
+    const now = new Date();
+    const currentMonth =
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+    content.innerHTML = `
+      <div style="margin-bottom:20px">
+        <label for="rankingMonth">Mes del ranking</label>
+        <input id="rankingMonth" type="month" value="${currentMonth}">
+      </div>
+      <div id="rankingResults">Cargando...</div>
+    `;
+
+    const monthInput = $("rankingMonth");
+    const results = $("rankingResults");
+
+    async function refreshRanking() {
+      results.textContent = "Calculando ranking...";
+
+      const { data, error } = await client.rpc("get_team_ranking", {
+        p_month: monthInput.value + "-01"
+      });
+
+      if (error) throw error;
+
+      const escapeHtml = value =>
+        String(value ?? "").replace(/[&<>"']/g, char => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;"
+        })[char]);
+
+      const completed = data.filter(user => user.objectives_complete);
+      const pending = data.filter(user => !user.objectives_complete);
+
+      const percentage = value =>
+        value === null ? "—" :
+        Number(value).toLocaleString("es-ES", {
+          maximumFractionDigits: 2
+        }) + "%";
+
+      const score = value =>
+        value === null ? "Pendiente" :
+        Number(value).toLocaleString("es-ES", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }) + " puntos";
+
+      results.innerHTML = `
+        ${completed.length === 0
+          ? `<p>Todavía no hay empleados con los tres objetivos configurados.</p>`
+          : `
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse;text-align:left">
+                <thead>
+                  <tr>
+                    <th style="padding:10px">Pos.</th>
+                    <th style="padding:10px">Empleado</th>
+                    <th style="padding:10px">Garantías</th>
+                    <th style="padding:10px">Financiación</th>
+                    <th style="padding:10px">Protectores</th>
+                    <th style="padding:10px">Puntuación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${completed.map((user, index) => `
+                    <tr style="border-top:1px solid #263449">
+                      <td style="padding:12px">${index + 1}</td>
+                      <td style="padding:12px">${escapeHtml(user.full_name || user.username)}</td>
+                      <td style="padding:12px">${percentage(user.garantias_pct)}</td>
+                      <td style="padding:12px">${percentage(user.financiacion_pct)}</td>
+                      <td style="padding:12px">${percentage(user.protectores_pct)}</td>
+                      <td style="padding:12px"><strong>${score(user.ranking_score)}</strong></td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          `
+        }
+
+        ${pending.length > 0 ? `
+          <h3 style="margin-top:24px">Objetivos pendientes</h3>
+          <p class="small">Estos empleados todavía no tienen los tres objetivos configurados.</p>
+          ${pending.map(user => `
+            <div style="padding:10px;border-top:1px solid #263449">
+              ${escapeHtml(user.full_name || user.username)}
+            </div>
+          `).join("")}
+        ` : ""}
+      `;
+    }
+
+    monthInput.addEventListener("change", refreshRanking);
+    await refreshRanking();
+
+  } catch (error) {
+    console.error("Error en loadRanking:", error);
+    content.textContent = "No se pudo cargar el ranking: " + error.message;
+  }
+}
+
+
 
 function showEditForm(card,user) {
   const old = card.querySelector(".edit-form");
