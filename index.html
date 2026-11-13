@@ -1106,15 +1106,28 @@ async function loadSummary() {
       `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
     content.innerHTML = `
-      <div style="margin-bottom:24px">
-        <label for="summaryMonth">Mes del resumen</label>
-        <input id="summaryMonth" type="month" value="${currentMonth}">
-      </div>
+      <div style="
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:16px;
+  margin-bottom:24px
+">
+  <div>
+    <label for="summaryMonth">Mes principal</label>
+    <input id="summaryMonth" type="month" value="${currentMonth}">
+  </div>
+
+  <div>
+    <label for="comparisonMonth">Comparar con</label>
+    <input id="comparisonMonth" type="month" value="${currentMonth}">
+  </div>
+</div>
       <div id="summaryResults">Cargando...</div>
     `;
 
-    const monthInput = $("summaryMonth");
-    const results = $("summaryResults");
+const monthInput = $("summaryMonth");
+const comparisonInput = $("comparisonMonth");
+const results = $("summaryResults");
 
     const escapeHtml = value =>
       String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -1159,16 +1172,8 @@ async function loadSummary() {
     async function refreshSummary() {
       results.textContent = "Calculando resultados...";
 
-      const [year, month] = monthInput.value.split("-").map(Number);
-
-      const selectedDate = new Date(year, month - 1, 1);
-      const previousDate = new Date(year, month - 2, 1);
-
-      const currentKey =
-        `${year}-${String(month).padStart(2, "0")}-01`;
-
-      const previousKey =
-        `${previousDate.getFullYear()}-${String(previousDate.getMonth() + 1).padStart(2, "0")}-01`;
+     const currentKey = monthInput.value + "-01";
+const previousKey = comparisonInput.value + "-01";
 
       const [currentResponse, previousResponse] = await Promise.all([
         client.rpc("get_monthly_summary", { p_month: currentKey }),
@@ -1300,8 +1305,10 @@ async function loadSummary() {
       results.innerHTML = cardsHtml + tableHtml;
     }
 
-    monthInput.addEventListener("change", refreshSummary);
-    await refreshSummary();
+monthInput.addEventListener("change", refreshSummary);
+comparisonInput.addEventListener("change", refreshSummary);
+
+await refreshSummary();
 
   } catch (error) {
     console.error("Error en loadSummary:", error);
