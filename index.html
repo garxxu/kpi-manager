@@ -261,7 +261,8 @@ function showTab(tab) {
 }
 
   
-async function loadDashboard() {
+
+async function loadDashboard(selectedDate = null) {
   const content = $("dashboardContent");
   content.textContent = "Cargando tus resultados...";
 
@@ -271,6 +272,7 @@ async function loadDashboard() {
     const month = now.getMonth();
 
     const pad = n => String(n).padStart(2, "0");
+    const today = `${year}-${pad(month + 1)}-${pad(now.getDate())}`;
     const monthStart = `${year}-${pad(month + 1)}-01`;
     const nextDate = new Date(year, month + 1, 1);
     const nextMonth = `${nextDate.getFullYear()}-${pad(nextDate.getMonth() + 1)}-01`;
@@ -292,9 +294,9 @@ async function loadDashboard() {
         .lt("entry_date", nextMonth)
     ]);
 
-    if (definitions.error || targets.error || entries.error) {
-      throw new Error("No se pudieron cargar los resultados.");
-    }
+    if (definitions.error) throw definitions.error;
+    if (targets.error) throw targets.error;
+    if (entries.error) throw entries.error;
 
     const targetMap = Object.fromEntries(
       targets.data.map(item => [item.kpi_id, Number(item.target)])
@@ -331,19 +333,11 @@ async function loadDashboard() {
         ? actual / target * 100
         : 0;
 
-      const unit = kpi.unit === "€"
-        ? money
-        : number;
-
-      const resultText = isVisual
-        ? "Objetivo visual"
-        : unit(actual);
-
+      const unit = kpi.unit === "€" ? money : number;
+      const resultText = isVisual ? "Objetivo visual" : unit(actual);
       const targetText = target > 0
         ? unit(target)
         : "Pendiente de configurar";
-
-      const progress = isVisual ? 0 : Math.min(percentage, 100);
 
       return `
         <div class="card">
@@ -357,25 +351,129 @@ async function loadDashboard() {
               ${target > 0 ? number(percentage) + "% completado" : "Sin objetivo configurado"}
             </div>
             <div style="height:8px;background:#263449;border-radius:8px;margin-top:8px;overflow:hidden">
-              <div style="height:100%;width:${progress}%;background:#35c98a;border-radius:8px"></div>
+              <div style="height:100%;width:${Math.min(percentage, 100)}%;background:#35c98a;border-radius:8px"></div>
             </div>
           `}
         </div>
       `;
     });
 
+    const dailyKpis = ["Garantías", "Financiación", "Protectores"]
+      .map(name => definitions.data.find(kpi => kpi.name === name))
+      .filter(Boolean);
+
     content.innerHTML = `
       <h3>${now.toLocaleDateString("es-ES", {
         month: "long",
         year: "numeric"
       })}</h3>
+
       <div class="grid">${cards.join("")}</div>
+
+      <div class="card" style="margin-top:20px">
+        <h2>Registro diario</h2>
+        <p>Introduce tus resultados del día. Si necesitas corregirlos, puedes volver a guardarlos.</p>
+
+        <form id="dailyEntryForm">
+          <label>Fecha del registro</label>
+          <input
+            id="dailyEntryDate"
+            type="date"
+            min="${monthStart}"
+            max="${today}"
+            value="${selectedDate || today}"
+            required
+          >
+
+          <div class="grid" style="margin-top:16px">
+            ${dailyKpis.map(kpi => `
+              <div>
+                <label for="daily-${kpi.id}">${kpi.name} (${kpi.unit})</label>
+                <input
+                  id="daily-${kpi.id}"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value="0"
+                  required
+                >
+              </div>
+            `).join("")}
+          </div>
+
+          <button type="submit" style="margin-top:18px">
+            Guardar resultados
+          </button>
+        </form>
+
+        <div id="dailyEntryStatus" class="status"></div>
+      </div>
     `;
 
+    const dateInput = $("dailyEntryDate");
+    const form = $("dailyEntryForm");
+    const status = $("dailyEntryStatus");
+
+    async function loadEntriesForDate() {
+      status.textContent = "Cargando registros del día...";
+
+      const { data, error } = await client
+        .from("kpi_entries")
+        .select("kpi_id,value")
+        .eq("user_id", currentUser.id)
+        .eq("entry_date", dateInput.value);
+
+      if (error) {
+        status.textContent = "No se pudieron cargar los registros.";
+        return;
+      }
+
+      dailyKpis.forEach(kpi => {
+        const existing = data.find(item => item.kpi_id === kpi.id);
+        $(`daily-${kpi.id}`).value = existing ? existing.value : 0;
+      });
+
+      status.textContent = "";
+    }
+
+    dateInput.addEventListener("change", loadEntriesForDate);
+    await loadEntriesForDate();
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+
+      status.textContent = "Guardando resultados...";
+
+      const records = dailyKpis.map(kpi => ({
+        user_id: currentUser.id,
+        kpi_id: kpi.id,
+        entry_date: dateInput.value,
+        value: Number($(`daily-${kpi.id}`).value)
+      }));
+
+      const { error } = await client
+        .from("kpi_entries")
+        .upsert(records, {
+          onConflict: "user_id,kpi_id,entry_date"
+        });
+
+      if (error) {
+        status.textContent = "Error al guardar: " + error.message;
+        return;
+      }
+
+      status.textContent = "Resultados guardados correctamente.";
+      await loadDashboard(dateInput.value);
+      $("dailyEntryStatus").textContent =
+        "Resultados guardados correctamente.";
+    });
+
   } catch (error) {
-    content.textContent = error.message;
+    console.error("Error en loadDashboard:", error);
+    content.textContent = "No se pudieron cargar los resultados.";
   }
 }
+
 
 
 document.querySelectorAll("nav button").forEach(button => {
