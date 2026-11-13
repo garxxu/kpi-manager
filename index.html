@@ -369,7 +369,8 @@ async function loadDashboard(selectedDate = null) {
         : 0;
 
       const unit = kpi.unit === "€" ? money : number;
-      const resultText = isVisual ? "Objetivo visual" : unit(actual);
+      const isNegative = actual !== null && actual < 0;
+      const resultHtml = isVisual ? "Objetivo visual" : (isNegative ? `<span style="color:#f87171">${unit(actual)}</span>` : unit(actual));
       const targetText = target > 0
         ? unit(target)
         : "Pendiente de configurar";
@@ -380,13 +381,13 @@ async function loadDashboard(selectedDate = null) {
           <div class="small">Objetivo mensual</div>
           <strong>${targetText}</strong>
           <div class="small" style="margin-top:12px">Resultado del mes</div>
-          <strong>${resultText}</strong>
+          <strong>${resultHtml}</strong>
           ${isVisual ? "" : `
-            <div class="small" style="margin-top:12px">
-              ${target > 0 ? number(percentage) + "% completado" : "Sin objetivo configurado"}
+            <div class="small" style="margin-top:12px;${isNegative ? 'color:#f87171' : ''}">
+              ${target > 0 ? (isNegative ? `${number(percentage)}% (en negativo)` : `${number(percentage)}% completado`) : "Sin objetivo configurado"}
             </div>
             <div style="height:8px;background:#263449;border-radius:8px;margin-top:8px;overflow:hidden">
-              <div style="height:100%;width:${Math.min(Math.max(percentage, 0), 100)}%;background:#35c98a;border-radius:8px"></div>
+              <div style="height:100%;width:${isNegative ? '0%' : `${Math.min(Math.max(percentage, 0), 100)}%`};background:${isNegative ? '#ef4444' : '#35c98a'};border-radius:8px"></div>
             </div>
           `}
         </div>
@@ -473,8 +474,10 @@ ${currentProfile.participates_in_ranking ? `
       dailyKpis.forEach(kpi => {
         const entry = data.find(item => item.kpi_id === kpi.id);
         const total = entry ? Number(entry.value) : 0;
-        $(`daily-total-${kpi.id}`).textContent =
-          kpi.unit === "€" ? money(total) : number(total);
+        const formatted = kpi.unit === "€" ? money(total) : number(total);
+        const el = $(`daily-total-${kpi.id}`);
+        el.textContent = formatted;
+        el.style.color = total < 0 ? "#f87171" : "";
       });
     }
 
@@ -678,16 +681,9 @@ async function loadUsers() {
         }
       });
 
-const movements = document.createElement("button");
-movements.className = "secondary";
-movements.textContent = "Gestionar movimientos";
-movements.addEventListener("click",() =>
-  showAdminMovementForm(card,user)
-);
-
-actions.append(edit,reset,toggle,movements);
-card.append(actions);
-$("usersList").append(card);
+      actions.append(edit,reset,toggle);
+      card.append(actions);
+      $("usersList").append(card);
     });
   } catch(err) {
     $("usersList").textContent = "";
@@ -899,24 +895,36 @@ async function loadRanking() {
     }
 
     function progressCell(actual, target, unit) {
-      const pct = Number(target) > 0
-        ? Number(actual) / Number(target) * 100
+      const actualNum = Number(actual);
+      const targetNum = Number(target);
+      const isNeg = actualNum < 0;
+      const pct = targetNum > 0
+        ? actualNum / targetNum * 100
         : 0;
 
-      const width = Math.min(Math.max(pct, 0), 100);
+      const width = isNeg ? 0 : Math.min(Math.max(pct, 0), 100);
 
       let difference;
 
-      if (pct < 100) {
+      if (isNeg) {
+        difference = `
+          <div class="small" style="color:#f87171">
+            En negativo: <strong>${formatAmount(actualNum, unit)}</strong>
+          </div>
+          <div class="small">
+            Faltan: <strong>${formatAmount(targetNum - actualNum, unit)}</strong>
+          </div>
+        `;
+      } else if (pct < 100) {
         difference = `
           <div class="small">
-            Faltan: <strong>${formatAmount(target - actual, unit)}</strong>
+            Faltan: <strong>${formatAmount(targetNum - actualNum, unit)}</strong>
           </div>
         `;
       } else if (pct > 100) {
         difference = `
           <div class="small">
-            Superado: <strong>${formatAmount(actual - target, unit)}</strong>
+            Superado: <strong>${formatAmount(actualNum - targetNum, unit)}</strong>
           </div>
         `;
       } else {
@@ -927,7 +935,7 @@ async function loadRanking() {
 
       return `
         <div style="min-width:145px">
-          <strong>${number(pct)}%</strong>
+          <strong style="${isNeg ? 'color:#f87171' : ''}">${number(pct)}%</strong>
 
           <div style="
             height:7px;
@@ -939,7 +947,7 @@ async function loadRanking() {
             <div style="
               height:100%;
               width:${width}%;
-              background:#35c98a;
+              background:${isNeg ? '#ef4444' : '#35c98a'};
               border-radius:8px
             "></div>
           </div>
@@ -1284,14 +1292,16 @@ const previousKey = comparisonInput.value + "-01";
                 const old = previousById.get(user.employee_id);
 
                 function cell(actual, target, pct, oldPct, unit) {
+                  const actualNum = Number(actual);
+                  const isNeg = actualNum < 0;
                   const oldText = old
                     ? comparison(pct, oldPct)
                     : `<span class="small">Sin datos anteriores</span>`;
 
                   return `
                     <div>
-                      <strong>${number(pct)}%</strong>
-                      <div class="small">${amount(actual, unit)} / ${amount(target, unit)}</div>
+                      <strong style="${isNeg ? 'color:#f87171' : ''}">${number(pct)}%</strong>
+                      <div class="small" style="${isNeg ? 'color:#f87171' : ''}">${amount(actual, unit)} / ${amount(target, unit)}</div>
                       <div class="small" style="margin-top:5px">${oldText}</div>
                     </div>
                   `;
@@ -1344,169 +1354,6 @@ await refreshSummary();
 
 
 
-
-
-
-async function showAdminMovementForm(card,user) {
-  const old = card.querySelector(".admin-movement-form");
-  if(old) {
-    old.remove();
-    return;
-  }
-
-  const form = document.createElement("form");
-  form.className = "admin-movement-form";
-  form.innerHTML = `
-    <hr>
-    <h3>Gestionar movimientos de ${user.full_name || user.username}</h3>
-
-    <h4>Acumulado del mes seleccionado</h4>
-    <div class="current-totals">Cargando acumulados...</div>
-
-    <label>Indicador</label>
-    <select name="kpi" required></select>
-
-    <label>Fecha del movimiento</label>
-    <input type="date" name="entry_date" required>
-
-    <label>Operación</label>
-    <select name="operation">
-      <option value="add">Añadir cantidad</option>
-      <option value="subtract">Restar cantidad</option>
-    </select>
-
-    <label>Cantidad</label>
-    <input type="number" name="amount" min="0.01" step="0.01" required>
-
-    <button type="submit" style="margin-top:14px">
-      Guardar movimiento
-    </button>
-    <div class="status"></div>
-  `;
-
-  const kpiSelect = form.elements.kpi;
-  const status = form.querySelector(".status");
-  const totalsBox = form.querySelector(".current-totals");
-
-  try {
-    const {data:definitions,error} = await client
-      .from("kpi_definitions")
-      .select("id,name,unit")
-      .eq("active",true)
-      .in("name",["Garantías","Financiación","Protectores"])
-      .order("name");
-
-    if(error) throw error;
-    if(!definitions || definitions.length === 0) {
-      throw new Error("No se encontraron indicadores disponibles.");
-    }
-
-    definitions.forEach(kpi => {
-      const option = document.createElement("option");
-      option.value = kpi.id;
-      option.textContent = kpi.name;
-      kpiSelect.append(option);
-    });
-
-    const now = new Date();
-    const localDate = [
-      now.getFullYear(),
-      String(now.getMonth() + 1).padStart(2,"0"),
-      String(now.getDate()).padStart(2,"0")
-    ].join("-");
-
-    form.elements.entry_date.value = localDate;
-
-    async function loadCurrentTotals() {
-      const selectedDate = form.elements.entry_date.value;
-      if(!selectedDate) return;
-
-      const year = Number(selectedDate.slice(0,4));
-      const month = Number(selectedDate.slice(5,7));
-
-      const monthStart = `${selectedDate.slice(0,7)}-01`;
-      const nextMonth = new Date(Date.UTC(year,month,1))
-        .toISOString().slice(0,10);
-
-      totalsBox.textContent = "Cargando acumulados...";
-
-      const {data:entries,error} = await client
-        .from("kpi_entries")
-        .select("kpi_id,value")
-        .eq("user_id",user.user_id)
-        .gte("entry_date",monthStart)
-        .lt("entry_date",nextMonth);
-
-      if(error) throw error;
-
-      totalsBox.innerHTML = "";
-
-      definitions.forEach(kpi => {
-        const total = (entries || [])
-          .filter(entry => entry.kpi_id === kpi.id)
-          .reduce((sum,entry) => sum + Number(entry.value),0);
-
-        const line = document.createElement("div");
-        line.style.margin = "6px 0";
-        line.textContent =
-          `${kpi.name}: ${new Intl.NumberFormat("es-ES",{
-            maximumFractionDigits:2
-          }).format(total)} ${kpi.unit || ""}`;
-
-        totalsBox.append(line);
-      });
-    }
-
-    form.elements.entry_date.addEventListener(
-      "change",
-      () => loadCurrentTotals().catch(err => {
-        totalsBox.textContent = err.message;
-      })
-    );
-
-    await loadCurrentTotals();
-
-    form.addEventListener("submit",async event => {
-      event.preventDefault();
-
-      const amount = Number(form.elements.amount.value);
-
-      if(!Number.isFinite(amount) || amount <= 0) {
-        status.textContent = "Introduce una cantidad mayor que cero.";
-        return;
-      }
-
-      status.textContent = "Guardando movimiento...";
-
-      try {
-        const {error} = await client.rpc(
-          "apply_kpi_movement_for_user",
-          {
-            p_user_id:user.user_id,
-            p_kpi_id:kpiSelect.value,
-            p_entry_date:form.elements.entry_date.value,
-            p_amount:amount,
-            p_operation:form.elements.operation.value
-          }
-        );
-
-        if(error) throw error;
-
-        await loadCurrentTotals();
-        status.textContent = "Movimiento guardado correctamente.";
-        form.elements.amount.value = "";
-      } catch(err) {
-        status.textContent = err.message;
-      }
-    });
-
-    card.append(form);
-
-  } catch(err) {
-    status.textContent = err.message;
-    card.append(form);
-  }
-}
 
 
 function showEditForm(card,user) {
