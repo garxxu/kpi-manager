@@ -537,6 +537,11 @@ function showTab(tab) {
   $("accountSection").classList.toggle("hidden", tab !== "account");
   $("usersSection").classList.toggle("hidden", tab !== "users");
 
+  if (tab === "dashboard" && currentUser) {
+    // Restablecer siempre al mes en curso por defecto
+    selectedDashboardMonth = null;
+    loadDashboard();
+  }
   if (tab === "ranking" && currentUser) {
     loadRanking();
   }
