@@ -187,8 +187,20 @@ hr{border:0;border-top:1px solid #40506a;margin:20px 0}
                 <option value="admin">Administrador</option>
               </select>
             </div>
-          </div>
-          <button type="submit" style="margin-top:18px">Crear usuario</button>
+
+<div style="margin-top:16px">
+  <label style="display:flex;align-items:center;gap:8px">
+    <input
+      id="newParticipatesInRanking"
+      type="checkbox"
+      checked
+    >
+    Participa en el ranking
+  </label>
+</div>
+
+</div>
+<button type="submit" style="margin-top:18px">Crear usuario</button>
         </form>
         <div id="createStatus" class="status"></div>
       </div>
@@ -1444,6 +1456,7 @@ $("createUserForm").addEventListener("submit",async event => {
     username:$("newUsername").value.trim(),
     password:$("newPassword").value,
     role:$("newRole").value
+    participates_in_ranking:$("newParticipatesInRanking").checked
   };
 
   try {
