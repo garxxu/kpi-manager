@@ -9,46 +9,84 @@
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#101827;color:#eef3fa;font-family:Arial,sans-serif;min-height:100vh}
+:root{color-scheme:dark}
+body{margin:0;background:#101827;color:#eef3fa;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
 button,input,select{font:inherit}
-button{cursor:pointer;border:0;border-radius:8px;padding:12px 16px;background:#26b783;color:#071b16;font-weight:bold}
-button.secondary{background:#40506a;color:white}
+button{cursor:pointer;border:0;border-radius:12px;padding:14px 20px;background:#26b783;color:#071b16;font-weight:700;font-size:15px;min-height:48px;display:inline-flex;align-items:center;justify-content:center;user-select:none;-webkit-tap-highlight-color:transparent;transition:transform .12s,background .2s,opacity .2s}
+button:active:not(:disabled){transform:scale(0.97)}
+button.secondary{background:#2e3e57;color:#f1f5f9}
+button.secondary:active:not(:disabled){background:#3c5070}
 button.danger{background:#8e3545;color:white}
 button:disabled{opacity:.5;cursor:not-allowed}
-input,select{width:100%;padding:12px;background:#101827;border:1px solid #40506a;border-radius:8px;color:white;margin-top:7px}
-label{display:block;color:#aab7c9;font-size:13px;margin-top:14px}
+
+input,select{width:100%;padding:14px 16px;background:#0d1422;border:1.5px solid #334460;border-radius:12px;color:#f8fafc;font-size:16px;margin-top:7px;min-height:50px;outline:none;-webkit-appearance:none;appearance:none;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus{border-color:#26b783;box-shadow:0 0 0 3px rgba(38,183,131,0.25)}
+
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;background-size:18px;padding-right:46px;cursor:pointer}
+
+input[type="date"],input[type="month"]{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'%3E%3C/path%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;background-size:22px;padding-right:48px}
+
+label{display:block;color:#94a3b8;font-size:13.5px;font-weight:600;margin-top:16px}
 h1,h2,h3{margin-top:0}
 p{color:#aab7c9;line-height:1.5}
 .small{font-size:13px;color:#aab7c9}
 .hidden{display:none!important}
-#login{width:min(92%,420px);margin:10vh auto;background:#1d293b;padding:32px;border-radius:16px}
-#login button{width:100%;margin-top:18px}
+
+#login{width:min(92%,440px);margin:8vh auto;background:#1d293b;padding:34px 28px;border-radius:20px;border:1px solid #34445d;box-shadow:0 12px 30px rgba(0,0,0,0.35)}
+#login button{width:100%;margin-top:22px;min-height:52px;font-size:16px}
 #message{margin-top:14px;color:#fca5a5;font-size:14px}
-header{background:#1d293b;border-bottom:1px solid #34445d;padding:18px 5%;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
-.brand{font-size:21px;font-weight:bold}
+
+header{background:#1d293b;border-bottom:1px solid #34445d;padding:16px 5%;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.brand{font-size:22px;font-weight:900;letter-spacing:-0.5px}
 .brand span{color:#df0000}
 .header-user{font-size:13px;color:#aab7c9}
-main{width:min(1100px,92%);margin:30px auto}
-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
-nav button{background:#26364d;color:#cbd5e1}
-nav button.active{background:#26b783;color:#071b16}
-.card{background:#1d293b;border:1px solid #34445d;border-radius:14px;padding:22px;margin-bottom:18px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.user-card{background:#243249;border:1px solid #40506a;border-radius:12px;padding:17px;margin-top:12px}
+
+main{width:min(1100px,94%);margin:24px auto}
+
+nav{display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px;margin-bottom:24px;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{background:#1e2c40;color:#cbd5e1;white-space:nowrap;flex-shrink:0;min-height:46px;padding:10px 20px;border-radius:30px;font-size:14.5px}
+nav button.active{background:#26b783;color:#071b16;font-weight:800}
+
+.card{background:#1d293b;border:1px solid #34445d;border-radius:18px;padding:24px;margin-bottom:20px;box-shadow:0 4px 16px rgba(0,0,0,0.15)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+
+.user-card{background:#23334a;border:1px solid #3b4e6d;border-radius:16px;padding:20px;margin-top:14px}
 .user-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
-.pill{font-size:11px;padding:5px 9px;border-radius:20px;background:#40506a;color:#e2e8f0}
+.pill{font-size:12px;font-weight:700;padding:6px 12px;border-radius:24px;background:#40506a;color:#e2e8f0}
 .pill.green{background:#145c47;color:#a7f3d0}
 .pill.red{background:#71313d;color:#fecaca}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
-.actions button{font-size:13px;padding:9px 12px}
-hr{border:0;border-top:1px solid #40506a;margin:20px 0}
-.notice{font-size:13px;color:#aab7c9;background:#26364d;padding:12px;border-radius:8px;margin-top:12px}
-.status{font-size:13px;margin-top:12px;min-height:18px}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.actions button{font-size:13.5px;padding:10px 16px;min-height:42px;border-radius:10px}
+
+hr{border:0;border-top:1px solid #3b4e6d;margin:22px 0}
+.notice{font-size:13px;color:#aab7c9;background:#26364d;padding:14px;border-radius:10px;margin-top:14px}
+.status{font-size:13.5px;margin-top:12px;min-height:20px}
 .status.error{color:#fca5a5}
 .status.ok{color:#86efac}
 .section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-@media(max-width:550px){header{padding:16px 4%}main{margin:20px auto}.card{padding:17px}}
+
+/* Touch Switch Card */
+.touch-toggle-card{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#131f31;border:1.5px solid #334460;border-radius:14px;padding:16px 18px;margin-top:16px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:background .2s,border-color .2s}
+.touch-toggle-card:active{background:#1a2b42}
+.touch-toggle-card .toggle-info{display:flex;flex-direction:column;gap:3px}
+.touch-toggle-card .toggle-title{font-weight:700;color:#f1f5f9;font-size:15px}
+.touch-toggle-card .toggle-sub{font-size:12.5px;color:#94a3b8;font-weight:normal}
+.switch{position:relative;display:inline-block;width:54px;height:32px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#334155;transition:.25s ease;border-radius:32px;border:1px solid #475569}
+.slider:before{position:absolute;content:"";height:24px;width:24px;left:3px;bottom:3px;background-color:#ffffff;transition:.25s ease;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.35)}
+.switch input:checked + .slider{background-color:#26b783;border-color:#26b783}
+.switch input:checked + .slider:before{transform:translateX(22px)}
+
+@media(max-width:550px){
+  header{padding:14px 4%}
+  main{margin:16px auto;width:94%}
+  .card{padding:18px;border-radius:16px}
+  .actions button{flex:1 1 auto}
+}
 </style>
 </head>
 
@@ -188,16 +226,16 @@ hr{border:0;border-top:1px solid #40506a;margin:20px 0}
               </select>
             </div>
 
-<div style="margin-top:16px">
-  <label style="display:flex;align-items:center;gap:8px">
-    <input
-      id="newParticipatesInRanking"
-      type="checkbox"
-      checked
-    >
-    Participa en el ranking
-  </label>
-</div>
+<label class="touch-toggle-card" for="newParticipatesInRanking">
+  <div class="toggle-info">
+    <span class="toggle-title">Participa en el ranking</span>
+    <span class="toggle-sub">Aparece en la clasificación mensual del equipo y en los objetivos</span>
+  </div>
+  <div class="switch">
+    <input id="newParticipatesInRanking" type="checkbox" checked>
+    <span class="slider"></span>
+  </div>
+</label>
 
 </div>
 <button type="submit" style="margin-top:18px">Crear usuario</button>
@@ -1546,9 +1584,15 @@ function showEditForm(card,user) {
       <option value="employee">Empleado</option>
       <option value="admin">Administrador</option>
     </select>
-    <label style="display:flex;align-items:center;gap:8px;margin-top:12px">
-      <input type="checkbox" name="participates_in_ranking">
-      Participa en el ranking
+    <label class="touch-toggle-card">
+      <div class="toggle-info">
+        <span class="toggle-title">Participa en el ranking</span>
+        <span class="toggle-sub">Aparece en la clasificación mensual del equipo y en los objetivos</span>
+      </div>
+      <div class="switch">
+        <input type="checkbox" name="participates_in_ranking">
+        <span class="slider"></span>
+      </div>
     </label>
     <button type="submit" style="margin-top:14px">Guardar cambios</button>
     <div class="status"></div>
