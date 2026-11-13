@@ -1144,48 +1144,64 @@ async function loadTargets() {
     if (definitionsResult.error) throw definitionsResult.error;
 
     const employees = (usersResult.users || [])
-  .filter(user => user.participates_in_ranking);
+      .filter(user => user.participates_in_ranking);
 
     const kpis = ["Venta", "NPS", "Garantías", "Financiación", "Protectores"]
       .map(name => definitionsResult.data.find(kpi => kpi.name === name))
       .filter(Boolean);
 
     if (employees.length === 0) {
-      content.textContent = "No hay empleados registrados.";
+      content.textContent = "No hay empleados registrados que participen en el ranking.";
       return;
     }
 
-    const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    })[char]);
-
     const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
     content.innerHTML = `
       <div class="card">
-        <label for="targetEmployee">Empleado</label>
-        <select id="targetEmployee">
-          ${employees.map(user => `
-            <option value="${escapeHtml(user.user_id)}">
-              ${escapeHtml(user.full_name || user.username)}
-              ${user.is_active ? "" : "(Desactivado)"}
-            </option>
-          `).join("")}
-        </select>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:16px">
+          <div>
+            <h3 style="margin:0 0 6px 0">Configurar metas individuales</h3>
+            <p class="small" style="margin:0">Define o actualiza los objetivos mensuales para cada empleado del equipo.</p>
+          </div>
+          <button id="resetAllTargetsBtn" type="button" class="secondary" style="background:#3b2d35;border:1px solid #71313d;color:#fecaca;padding:10px 16px;min-height:42px;font-size:13.5px;border-radius:10px">
+            🔄 Reiniciar objetivos del mes a 0
+          </button>
+        </div>
 
-        <label for="targetMonth" style="margin-top:16px">Mes</label>
-        <input id="targetMonth" type="month" value="${currentMonth}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+          <div>
+            <label for="targetMonth">Mes a configurar</label>
+            <input id="targetMonth" type="month" value="${currentMonthKey}" min="${currentMonthKey}">
+          </div>
+          <div>
+            <label for="targetEmployee">Empleado</label>
+            <select id="targetEmployee">
+              ${employees.map(user => `
+                <option value="${escapeHtml(user.user_id)}">
+                  ${escapeHtml(user.full_name || user.username)}
+                  ${user.is_active ? "" : "(Desactivado)"}
+                </option>
+              `).join("")}
+            </select>
+          </div>
+        </div>
+
+        <div id="targetPastNotice" class="notice hidden" style="background:#372428;border:1px solid #71313d;color:#fecaca;margin-top:16px">
+          🔒 <strong>Mes finalizado:</strong> No se pueden editar objetivos de meses pasados para proteger la integridad del histórico y los resultados ya cerrados.
+        </div>
 
         <div id="targetFields" style="margin-top:20px"></div>
 
-        <button id="saveTargets" style="margin-top:20px">
-          Guardar los cinco objetivos
-        </button>
+        <div style="display:flex;gap:12px;align-items:center;margin-top:22px;flex-wrap:wrap">
+          <button id="saveTargets" type="button">
+            💾 Guardar objetivos de este empleado
+          </button>
+          <button id="resetEmployeeTargetsBtn" type="button" class="secondary" style="min-height:48px">
+            Poner a 0 este empleado
+          </button>
+        </div>
 
         <div id="targetsStatus" class="status"></div>
       </div>
@@ -1195,12 +1211,28 @@ async function loadTargets() {
     const monthInput = $("targetMonth");
     const fields = $("targetFields");
     const status = $("targetsStatus");
+    const saveButton = $("saveTargets");
+    const resetEmpButton = $("resetEmployeeTargetsBtn");
+    const resetAllBtn = $("resetAllTargetsBtn");
+    const pastNotice = $("targetPastNotice");
+
+    function isPastMonth(selectedMonth) {
+      return selectedMonth < currentMonthKey;
+    }
 
     async function loadSelectedTargets() {
       fields.textContent = "Cargando objetivos...";
       status.textContent = "";
 
-      const month = monthInput.value + "-01";
+      const selMonth = monthInput.value;
+      const isPast = isPastMonth(selMonth);
+
+      pastNotice.classList.toggle("hidden", !isPast);
+      saveButton.disabled = isPast;
+      resetEmpButton.disabled = isPast;
+      resetAllBtn.disabled = isPast;
+
+      const month = selMonth + "-01";
 
       const { data, error } = await client
         .from("monthly_targets")
@@ -1208,10 +1240,13 @@ async function loadTargets() {
         .eq("employee_id", employeeSelect.value)
         .eq("month", month);
 
-      if (error) throw error;
+      if (error) {
+        fields.textContent = "Error al cargar objetivos: " + error.message;
+        return;
+      }
 
       const values = Object.fromEntries(
-        data.map(item => [item.kpi_id, Number(item.target)])
+        (data || []).map(item => [item.kpi_id, Number(item.target)])
       );
 
       fields.innerHTML = kpis.map(kpi => `
@@ -1225,6 +1260,7 @@ async function loadTargets() {
             min="0"
             step="0.01"
             value="${values[kpi.id] ?? 0}"
+            ${isPast ? "disabled style='opacity:0.6;cursor:not-allowed'" : ""}
             required
           >
         </div>
@@ -1234,9 +1270,66 @@ async function loadTargets() {
     employeeSelect.addEventListener("change", loadSelectedTargets);
     monthInput.addEventListener("change", loadSelectedTargets);
 
-    $("saveTargets").addEventListener("click", async () => {
+    // Botón: Poner a 0 solo los inputs del empleado seleccionado
+    resetEmpButton.addEventListener("click", () => {
+      if (isPastMonth(monthInput.value)) return;
+      kpis.forEach(kpi => {
+        const inp = $(`target-${kpi.id}`);
+        if (inp) inp.value = 0;
+      });
+      status.textContent = "Campos puestos a 0. Pulsa 'Guardar objetivos' para confirmar.";
+      status.className = "status ok";
+    });
+
+    // Botón: Reiniciar masivamente a 0 todos los objetivos del mes seleccionado (sin tocar histórico)
+    resetAllBtn.addEventListener("click", async () => {
+      const targetMonthVal = monthInput.value;
+      if (isPastMonth(targetMonthVal)) {
+        alert("No se pueden modificar ni reiniciar objetivos de meses pasados.");
+        return;
+      }
+
+      const monthName = new Date(targetMonthVal + "-01").toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+      const confirmed = confirm(
+        `¿Seguro que deseas reiniciar a 0 los objetivos de TODOS los empleados para ${monthName}?\n\n` +
+        `• Los registros de meses anteriores NO se modificarán ni borrarán.\n` +
+        `• Esto dejará las metas del mes seleccionado listas para asignar nuevos valores.`
+      );
+      if (!confirmed) return;
+
+      resetAllBtn.disabled = true;
+      status.textContent = "Reiniciando objetivos del mes a 0...";
+      status.className = "status";
+
+      try {
+        const { error } = await client.rpc("reset_monthly_targets_for_month", {
+          p_month: targetMonthVal + "-01"
+        });
+        if (error) throw error;
+
+        status.textContent = `¡Objetivos de todos los empleados para ${monthName} reiniciados a 0 correctamente!`;
+        status.className = "status ok";
+        await loadSelectedTargets();
+        await loadDashboard();
+      } catch (err) {
+        status.textContent = "Error al reiniciar: " + err.message;
+        status.className = "status error";
+      } finally {
+        resetAllBtn.disabled = false;
+      }
+    });
+
+    // Botón: Guardar los cinco objetivos del empleado
+    saveButton.addEventListener("click", async () => {
       if (!employeeSelect.value || !monthInput.value) {
         status.textContent = "Selecciona un empleado y un mes.";
+        status.className = "status error";
+        return;
+      }
+
+      if (isPastMonth(monthInput.value)) {
+        status.textContent = "No se pueden guardar cambios en meses ya finalizados.";
+        status.className = "status error";
         return;
       }
 
@@ -1250,13 +1343,14 @@ async function loadTargets() {
       if (records.some(record =>
         !Number.isFinite(record.target) || record.target < 0
       )) {
-        status.textContent = "Revisa los objetivos introducidos.";
+        status.textContent = "Revisa los objetivos introducidos. No pueden ser negativos ni estar vacíos.";
+        status.className = "status error";
         return;
       }
 
-      const saveButton = $("saveTargets");
       saveButton.disabled = true;
       status.textContent = "Guardando objetivos...";
+      status.className = "status";
 
       try {
         const { error } = await client
@@ -1267,10 +1361,12 @@ async function loadTargets() {
 
         if (error) throw error;
 
-        status.textContent = "Los cinco objetivos se han guardado correctamente.";
+        status.textContent = "Los cinco objetivos se han guardado y actualizado correctamente.";
+        status.className = "status ok";
         await loadDashboard();
       } catch (error) {
         status.textContent = "Error al guardar: " + error.message;
+        status.className = "status error";
       } finally {
         saveButton.disabled = false;
       }
@@ -1284,7 +1380,6 @@ async function loadTargets() {
   }
 }
 
-  
 async function loadRanking() {
   const content = $("rankingContent");
   content.textContent = "Cargando ranking...";
