@@ -816,8 +816,6 @@ async function loadTargets() {
 }
 
   
-
-
 async function loadRanking() {
   const content = $("rankingContent");
   content.textContent = "Cargando ranking...";
@@ -847,10 +845,10 @@ async function loadRanking() {
         "'": "&#39;"
       })[char]);
 
-    const formatPct = value =>
+    const number = value =>
       Number(value).toLocaleString("es-ES", {
         maximumFractionDigits: 2
-      }) + "%";
+      });
 
     const formatScore = value =>
       Number(value).toLocaleString("es-ES", {
@@ -858,22 +856,42 @@ async function loadRanking() {
         maximumFractionDigits: 2
       });
 
-    function progressCell(value) {
-      const pct = Number(value);
+    function formatAmount(value, unit) {
+      return unit === "€" ? `${number(value)} €` :
+        `${number(value)} ${unit}`;
+    }
+
+    function progressCell(actual, target, unit) {
+      const pct = Number(target) > 0
+        ? Number(actual) / Number(target) * 100
+        : 0;
+
       const width = Math.min(Math.max(pct, 0), 100);
 
       let difference;
+
       if (pct < 100) {
-        difference = `Faltan ${formatPct(100 - pct)}`;
+        difference = `
+          <div class="small">
+            Faltan: <strong>${formatAmount(target - actual, unit)}</strong>
+          </div>
+        `;
       } else if (pct > 100) {
-        difference = `Superado +${formatPct(pct - 100)}`;
+        difference = `
+          <div class="small">
+            Superado: <strong>${formatAmount(actual - target, unit)}</strong>
+          </div>
+        `;
       } else {
-        difference = "Objetivo cumplido";
+        difference = `
+          <div class="small">Objetivo cumplido</div>
+        `;
       }
 
       return `
-        <div style="min-width:125px">
-          <strong>${formatPct(pct)}</strong>
+        <div style="min-width:145px">
+          <strong>${number(pct)}%</strong>
+
           <div style="
             height:7px;
             background:#263449;
@@ -888,7 +906,12 @@ async function loadRanking() {
               border-radius:8px
             "></div>
           </div>
-          <div class="small">${difference}</div>
+
+          ${difference}
+
+          <div class="small" style="margin-top:5px;color:#aab8ca">
+            Objetivo: ${formatAmount(target, unit)}
+          </div>
         </div>
       `;
     }
@@ -923,7 +946,6 @@ async function loadRanking() {
         ">
           ${podium.map((user, index) => {
             const position = index + 1;
-            const score = Number(user.ranking_score);
 
             return `
               <div style="
@@ -952,7 +974,7 @@ async function loadRanking() {
                   font-weight:800;
                   color:#35c98a
                 ">
-                  ${formatScore(score)}
+                  ${formatScore(user.ranking_score)}
                 </div>
 
                 <div class="small">puntos sobre 100</div>
@@ -966,15 +988,15 @@ async function loadRanking() {
 
       const tableHtml = completed.length ? `
         <h3 style="margin-bottom:8px">Clasificación detallada</h3>
+
         <p class="small" style="margin-bottom:16px">
-          Porcentaje real de cumplimiento respecto al objetivo mensual.
-          Los porcentajes pueden superar el 100 %.
+          Cumplimiento real, cantidad pendiente o superada y objetivo total.
         </p>
 
         <div style="overflow-x:auto">
           <table style="
             width:100%;
-            min-width:850px;
+            min-width:950px;
             border-collapse:collapse;
             text-align:left
           ">
@@ -982,9 +1004,9 @@ async function loadRanking() {
               <tr style="border-bottom:1px solid #34445a">
                 <th style="padding:12px">Pos.</th>
                 <th style="padding:12px">Empleado</th>
-                <th style="padding:12px">Garantías (50 %)</th>
-                <th style="padding:12px">Financiación (35 %)</th>
-                <th style="padding:12px">Protectores (15 %)</th>
+                <th style="padding:12px">Garantías (50%)</th>
+                <th style="padding:12px">Financiación (35%)</th>
+                <th style="padding:12px">Protectores (15%)</th>
                 <th style="padding:12px">Ranking</th>
               </tr>
             </thead>
@@ -1004,15 +1026,15 @@ async function loadRanking() {
                   </td>
 
                   <td style="padding:14px">
-                    ${progressCell(user.garantias_pct)}
+                    ${progressCell(user.garantias_actual, user.garantias_target, "€")}
                   </td>
 
                   <td style="padding:14px">
-                    ${progressCell(user.financiacion_pct)}
+                    ${progressCell(user.financiacion_actual, user.financiacion_target, "€")}
                   </td>
 
                   <td style="padding:14px">
-                    ${progressCell(user.protectores_pct)}
+                    ${progressCell(user.protectores_actual, user.protectores_target, "unidades")}
                   </td>
 
                   <td style="padding:14px">
@@ -1037,8 +1059,7 @@ async function loadRanking() {
         ">
           <h3>Objetivos pendientes</h3>
           <p class="small">
-            Estos empleados todavía no tienen los tres objetivos
-            de ranking configurados.
+            Estos empleados todavía no tienen los tres objetivos configurados.
           </p>
 
           ${pending.map(user => `
@@ -1060,6 +1081,10 @@ async function loadRanking() {
     content.textContent = "No se pudo cargar el ranking: " + error.message;
   }
 }
+
+
+
+
 
 
 
