@@ -87,6 +87,48 @@ hr{border:0;border-top:1px solid #3b4e6d;margin:22px 0}
   .card{padding:18px;border-radius:16px}
   .actions button{flex:1 1 auto}
 }
+
+/* Run-rate Badges */
+.run-rate-badge{background:rgba(15,23,42,0.6);border:1px dashed rgba(148,163,184,0.3);border-radius:12px;padding:12px 14px;margin-top:14px;display:flex;flex-direction:column;gap:5px}
+.run-rate-badge.ok{background:rgba(20,92,71,0.25);border:1px solid #145c47;color:#a7f3d0;flex-direction:row;align-items:center;gap:10px}
+.run-rate-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#94a3b8}
+.run-rate-val{font-size:13.5px;color:#f1f5f9}
+.run-rate-val strong{color:#38bdf8}
+
+/* Profile Modal & Sheets */
+.modal-backdrop{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(7,11,19,0.82);backdrop-filter:blur(6px);z-index:999;display:flex;align-items:center;justify-content:center;padding:16px;-webkit-tap-highlight-color:transparent}
+.modal-backdrop.hidden{display:none!important}
+.modal-card{background:#1a273a;border:1px solid #334460;border-radius:24px;width:min(620px,100%);max-height:92vh;overflow-y:auto;padding:26px;box-shadow:0 20px 40px rgba(0,0,0,0.5);position:relative;-webkit-overflow-scrolling:touch}
+.modal-close{position:absolute;top:18px;right:18px;background:#24344d;color:#cbd5e1;border:0;border-radius:50%;width:38px;height:38px;padding:0;min-height:38px;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.modal-close:hover{background:#334769}
+
+.profile-header{display:flex;align-items:center;gap:18px;margin-bottom:24px;flex-wrap:wrap}
+.profile-avatar{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#df0000,#790000);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;box-shadow:0 6px 16px rgba(223,0,0,0.35);flex-shrink:0}
+.profile-titles{display:flex;flex-direction:column;gap:4px}
+.profile-titles h2{margin:0;font-size:22px;color:#f8fafc}
+.profile-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* Badges Showcase */
+.badges-section{margin:22px 0;background:#111c2b;border:1px solid #283952;border-radius:18px;padding:18px}
+.badges-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.badges-title h3{margin:0;font-size:16px;display:flex;align-items:center;gap:8px;color:#f1f5f9}
+.badges-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.badge-item{background:#18263a;border:1px solid #2d3f5a;border-radius:14px;padding:12px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;transition:transform .2s}
+.badge-item.unlocked{border-color:#df0000;background:rgba(223,0,0,0.08);box-shadow:0 0 12px rgba(223,0,0,0.15)}
+.badge-item.locked{opacity:0.55;filter:grayscale(0.7)}
+.badge-icon{font-size:28px}
+.badge-name{font-size:12px;font-weight:700;color:#f1f5f9;line-height:1.2}
+.badge-tag{font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;text-transform:uppercase}
+.badge-item.unlocked .badge-tag{background:#df0000;color:white}
+.badge-item.locked .badge-tag{background:#334155;color:#94a3b8}
+
+/* Interactive Clickable User Names */
+.user-link-btn{background:transparent;border:0;color:#38bdf8;font-weight:700;padding:4px 6px;margin:-4px -6px;cursor:pointer;text-align:left;font-size:inherit;display:inline-flex;align-items:center;gap:6px;border-radius:8px;text-decoration:underline;text-underline-offset:3px}
+.user-link-btn:hover{background:rgba(56,189,248,0.12)}
+.podium-user-btn{background:transparent;border:0;color:#f8fafc;font-size:17px;font-weight:700;cursor:pointer;padding:6px 10px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;text-decoration:underline;text-underline-offset:4px}
+.podium-user-btn:hover{background:rgba(255,255,255,0.08)}
+.clickable-header-name{cursor:pointer;text-decoration:underline;text-underline-offset:3px;color:#38bdf8}
+.clickable-header-name:hover{opacity:0.85}
 </style>
 </head>
 
@@ -288,7 +330,7 @@ async function loadProfile(user) {
   $("login").classList.add("hidden");
   $("app").classList.remove("hidden");
 
-  $("headerName").textContent = data.full_name || data.username;
+  $("headerName").textContent = data.full_name || data.username; $("headerName").className = "header-user clickable-header-name"; $("headerName").onclick = () => openUserProfile(currentUser.id, data.full_name || data.username);
   $("headerRole").textContent = data.role === "admin" ? "Administrador" : "Empleado";
   $("accountName").textContent = data.full_name || "—";
   $("accountUsername").textContent = data.username || "—";
@@ -398,6 +440,10 @@ async function loadDashboard(selectedDate = null) {
       maximumFractionDigits: 2
     }).format(value);
 
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const currentDay = now.getDate();
+    const remainingDays = Math.max(1, daysInMonth - currentDay + 1);
+
     const cards = definitions.data.map(kpi => {
       const target = targetMap[kpi.id] || 0;
       const isVisual = ["Venta", "NPS"].includes(kpi.name);
@@ -413,6 +459,37 @@ async function loadDashboard(selectedDate = null) {
         ? unit(target)
         : "Pendiente de configurar";
 
+      let runRateHtml = "";
+      if (!isVisual && target > 0) {
+        if (actual >= target) {
+          const extra = actual - target;
+          runRateHtml = `
+            <div class="run-rate-badge ok">
+              <span>🎉</span>
+              <div>
+                <strong>¡Objetivo mensual cumplido!</strong>
+                ${extra > 0 ? `<div class="small" style="color:#86efac;margin-top:2px">+${unit(extra)} por encima de meta</div>` : ''}
+              </div>
+            </div>
+          `;
+        } else {
+          const needed = target - actual;
+          const dailyRate = needed / remainingDays;
+          const rateFormatted = kpi.unit === "€" ? money(dailyRate) : `${number(Math.ceil(dailyRate))} ${kpi.unit || "uds."}`;
+          runRateHtml = `
+            <div class="run-rate-badge">
+              <div class="run-rate-top">
+                <span>⏱️ <strong>${remainingDays}</strong> ${remainingDays === 1 ? 'día restante' : 'días restantes'}</span>
+                <span>Faltan: ${unit(needed)}</span>
+              </div>
+              <div class="run-rate-val">
+                Ritmo necesario: <strong>${rateFormatted} / día</strong>
+              </div>
+            </div>
+          `;
+        }
+      }
+
       return `
         <div class="card">
           <h3>${kpi.name}</h3>
@@ -427,6 +504,7 @@ async function loadDashboard(selectedDate = null) {
             <div style="height:8px;background:#263449;border-radius:8px;margin-top:8px;overflow:hidden">
               <div style="height:100%;width:${isNegative ? '0%' : `${Math.min(Math.max(percentage, 0), 100)}%`};background:${isNegative ? '#ef4444' : '#35c98a'};border-radius:8px"></div>
             </div>
+            ${runRateHtml}
           `}
         </div>
       `;
@@ -1051,13 +1129,10 @@ async function loadRanking() {
                     position === 2 ? "2.º PUESTO" : "3.º PUESTO"}
                 </div>
 
-                <div style="
-                  font-size:17px;
-                  font-weight:700;
-                  margin-bottom:12px;
-                  overflow-wrap:anywhere
-                ">
-                  ${escapeHtml(user.full_name || user.username)}
+                <div style="margin-bottom:12px;overflow-wrap:anywhere">
+                  <button type="button" class="podium-user-btn" onclick="openUserProfile('${user.user_id}', '${escapeHtml(user.full_name || user.username)}', $('rankingMonth').value)">
+                    👤 ${escapeHtml(user.full_name || user.username)}
+                  </button>
                 </div>
 
                 <div style="
@@ -1113,7 +1188,9 @@ async function loadRanking() {
                   </td>
 
                   <td style="padding:14px;font-weight:600">
-                    ${escapeHtml(user.full_name || user.username)}
+                    <button type="button" class="user-link-btn" onclick="openUserProfile('${user.user_id}', '${escapeHtml(user.full_name || user.username)}', $('rankingMonth').value)">
+                      👤 ${escapeHtml(user.full_name || user.username)}
+                    </button>
                   </td>
 
                   <td style="padding:14px">
@@ -1715,6 +1792,182 @@ async function checkSession() {
 }
 
 checkSession();
+
+async function openUserProfile(userId, fallbackName, initialMonth = null) {
+  const modal = $("userProfileModal");
+  const container = $("userProfileModalContent");
+  modal.classList.remove("hidden");
+  container.innerHTML = `<div style="text-align:center;padding:30px 0">Cargando perfil...</div>`;
+
+  try {
+    const now = new Date();
+    const currentMonthKey = initialMonth || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+    // 1. Fetch profile info
+    const { data: profile, error: profileErr } = await client
+      .from("profiles")
+      .select("user_id,full_name,username,role,is_active,participates_in_ranking")
+      .eq("user_id", userId)
+      .single();
+
+    const name = profile?.full_name || profile?.username || fallbackName || "Usuario";
+    const initials = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "GM";
+
+    // 2. Fetch stats for the selected month
+    const { data: summaryData } = await client.rpc("get_monthly_summary", {
+      p_month: currentMonthKey + "-01"
+    });
+
+    const userStats = (summaryData || []).find(u => u.employee_id === userId);
+
+    const score = userStats ? Number(userStats.ranking_score || 0) : 0;
+    const garantiasPct = userStats ? Number(userStats.garantias_pct || 0) : 0;
+    const financiacPct = userStats ? Number(userStats.financiacion_pct || 0) : 0;
+    const protectorPct = userStats ? Number(userStats.protectores_pct || 0) : 0;
+
+    // Badges definitions
+    const badges = [
+      {
+        id: "podium_lead",
+        icon: "🥇",
+        name: "Líder de Ventas",
+        desc: "Supera los 80 puntos de ranking",
+        unlocked: score >= 80
+      },
+      {
+        id: "guarantee_master",
+        icon: "🛡️",
+        name: "Guardián Garantías",
+        desc: "Cumplimiento ≥ 100% en Garantías",
+        unlocked: garantiasPct >= 100
+      },
+      {
+        id: "finance_pro",
+        icon: "⚡",
+        name: "Financiador Pro",
+        desc: "Cumplimiento ≥ 100% en Financiación",
+        unlocked: financiacPct >= 100
+      },
+      {
+        id: "screen_shield",
+        icon: "📱",
+        name: "Escudo Protector",
+        desc: "Cumplimiento ≥ 100% en Protectores",
+        unlocked: protectorPct >= 100
+      },
+      {
+        id: "full_slam",
+        icon: "🏆",
+        name: "Pleno GruMito",
+        desc: "Todos los objetivos cumplidos",
+        unlocked: Boolean(userStats?.objectives_complete && garantiasPct >= 100 && financiacPct >= 100 && protectorPct >= 100)
+      },
+      {
+        id: "rising_star",
+        icon: "⭐",
+        name: "En Racha",
+        desc: "Participa activamente en el ranking",
+        unlocked: Boolean(profile?.participates_in_ranking)
+      }
+    ];
+
+    const money = val => new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(val || 0);
+    const num = val => Number(val || 0).toLocaleString("es-ES", { maximumFractionDigits: 2 });
+
+    container.innerHTML = `
+      <div class="profile-header">
+        <div class="profile-avatar">${initials}</div>
+        <div class="profile-titles">
+          <h2>${escapeHtml(name)}</h2>
+          <div class="profile-meta">
+            <span class="small" style="color:#94a3b8">@${escapeHtml(profile?.username || "")}</span>
+            <span class="pill ${profile?.role === "admin" ? "red" : ""}">${profile?.role === "admin" ? "Administrador" : "Empleado"}</span>
+            <span class="pill ${profile?.is_active ? "green" : "red"}">${profile?.is_active ? "Activo" : "Inactivo"}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vitrina de Insignias -->
+      <div class="badges-section">
+        <div class="badges-title">
+          <h3>🏆 Insignias y Logros</h3>
+          <span class="small" style="color:#df0000;font-weight:700">
+            ${badges.filter(b => b.unlocked).length} de ${badges.length} desbloqueadas
+          </span>
+        </div>
+        <div class="badges-grid">
+          ${badges.map(b => `
+            <div class="badge-item ${b.unlocked ? "unlocked" : "locked"}">
+              <div class="badge-icon">${b.icon}</div>
+              <div class="badge-name">${b.name}</div>
+              <div class="small" style="font-size:11px;color:#94a3b8;line-height:1.2">${b.desc}</div>
+              <span class="badge-tag">${b.unlocked ? "Conseguida" : "Bloqueada"}</span>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+
+      <!-- Estadísticas del Mes -->
+      <div style="margin-top:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+          <h3 style="margin:0;font-size:17px">📊 Estadísticas del mes</h3>
+          <input type="month" id="modalMonthSelect" value="${currentMonthKey}" style="width:auto;min-height:40px;padding:8px 36px 8px 12px;font-size:14px">
+        </div>
+
+        ${userStats ? `
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px">
+            <div style="background:#131f31;border:1px solid #2d3f5a;border-radius:14px;padding:14px;text-align:center">
+              <div class="small">Puntos Ranking</div>
+              <strong style="font-size:24px;color:#26b783;display:block;margin-top:4px">${num(score)}</strong>
+              <div class="small" style="color:#94a3b8">sobre 100</div>
+            </div>
+            <div style="background:#131f31;border:1px solid #2d3f5a;border-radius:14px;padding:14px;text-align:center">
+              <div class="small">Garantías</div>
+              <strong style="font-size:20px;display:block;margin-top:4px">${num(garantiasPct)}%</strong>
+              <div class="small" style="color:#94a3b8">${money(userStats.garantias_actual)}</div>
+            </div>
+            <div style="background:#131f31;border:1px solid #2d3f5a;border-radius:14px;padding:14px;text-align:center">
+              <div class="small">Financiación</div>
+              <strong style="font-size:20px;display:block;margin-top:4px">${num(financiacPct)}%</strong>
+              <div class="small" style="color:#94a3b8">${money(userStats.financiacion_actual)}</div>
+            </div>
+            <div style="background:#131f31;border:1px solid #2d3f5a;border-radius:14px;padding:14px;text-align:center">
+              <div class="small">Protectores</div>
+              <strong style="font-size:20px;display:block;margin-top:4px">${num(protectorPct)}%</strong>
+              <div class="small" style="color:#94a3b8">${num(userStats.protectores_actual)} uds.</div>
+            </div>
+          </div>
+        ` : `
+          <div class="notice">No hay registros de objetivos ni actividad para este empleado en el mes seleccionado.</div>
+        `}
+      </div>
+    `;
+
+    $("modalMonthSelect").addEventListener("change", e => {
+      openUserProfile(userId, fallbackName, e.target.value);
+    });
+
+  } catch (err) {
+    container.innerHTML = `<div class="status error">Error al cargar perfil: ${err.message}</div>`;
+  }
+}
+
+function closeUserProfile() {
+  $("userProfileModal").classList.add("hidden");
+}
+
+window.addEventListener("click", e => {
+  if (e.target === $("userProfileModal")) {
+    closeUserProfile();
+  }
+});
 </script>
+<!-- Modal de Perfil de Usuario e Insignias -->
+<div id="userProfileModal" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <button type="button" class="modal-close" onclick="closeUserProfile()">&times;</button>
+    <div id="userProfileModalContent">Cargando perfil...</div>
+  </div>
+</div>
 </body>
 </html>
