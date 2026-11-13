@@ -172,6 +172,22 @@ hr{border:0;border-top:1px solid #3b4e6d;margin:22px 0}
     <section id="accountSection">
       <div class="card">
         <h2>Mi cuenta</h2>
+        <div class="avatar-upload-box" style="margin-bottom:20px">
+          <div id="accountAvatarPreview" class="avatar-preview">👤</div>
+          <div>
+            <strong style="font-size:16px">Foto de perfil</strong>
+            <p class="small" style="margin:4px 0 12px 0">Personaliza tu imagen visible en el ranking y en tu perfil público.</p>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <label for="avatarFileInput" style="display:inline-flex;align-items:center;justify-content:center;padding:10px 18px;background:#26b783;color:#071b16;font-weight:700;font-size:14px;min-height:44px;border-radius:12px;cursor:pointer;margin:0;user-select:none">
+                📷 Elegir foto
+              </label>
+              <input id="avatarFileInput" type="file" accept="image/*" style="display:none">
+              <button id="removeAvatarBtn" type="button" class="secondary" style="padding:10px 18px;min-height:44px;font-size:14px;border-radius:12px">Quitar foto</button>
+            </div>
+            <div id="avatarUploadStatus" class="status"></div>
+          </div>
+        </div>
+        <hr style="margin:20px 0">
         <div class="grid">
           <div>
             <div class="small">Nombre</div>
