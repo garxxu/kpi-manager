@@ -1346,6 +1346,7 @@ await refreshSummary();
 
 
 
+
 async function showAdminMovementForm(card,user) {
   const old = card.querySelector(".admin-movement-form");
   if(old) {
@@ -1358,6 +1359,9 @@ async function showAdminMovementForm(card,user) {
   form.innerHTML = `
     <hr>
     <h3>Gestionar movimientos de ${user.full_name || user.username}</h3>
+
+    <h4>Acumulado del mes seleccionado</h4>
+    <div class="current-totals">Cargando acumulados...</div>
 
     <label>Indicador</label>
     <select name="kpi" required></select>
@@ -1382,17 +1386,17 @@ async function showAdminMovementForm(card,user) {
 
   const kpiSelect = form.elements.kpi;
   const status = form.querySelector(".status");
+  const totalsBox = form.querySelector(".current-totals");
 
   try {
     const {data:definitions,error} = await client
       .from("kpi_definitions")
-      .select("id,name")
+      .select("id,name,unit")
       .eq("active",true)
       .in("name",["Garantías","Financiación","Protectores"])
       .order("name");
 
     if(error) throw error;
-
     if(!definitions || definitions.length === 0) {
       throw new Error("No se encontraron indicadores disponibles.");
     }
@@ -1412,6 +1416,55 @@ async function showAdminMovementForm(card,user) {
     ].join("-");
 
     form.elements.entry_date.value = localDate;
+
+    async function loadCurrentTotals() {
+      const selectedDate = form.elements.entry_date.value;
+      if(!selectedDate) return;
+
+      const year = Number(selectedDate.slice(0,4));
+      const month = Number(selectedDate.slice(5,7));
+
+      const monthStart = `${selectedDate.slice(0,7)}-01`;
+      const nextMonth = new Date(Date.UTC(year,month,1))
+        .toISOString().slice(0,10);
+
+      totalsBox.textContent = "Cargando acumulados...";
+
+      const {data:entries,error} = await client
+        .from("kpi_entries")
+        .select("kpi_id,value")
+        .eq("user_id",user.user_id)
+        .gte("entry_date",monthStart)
+        .lt("entry_date",nextMonth);
+
+      if(error) throw error;
+
+      totalsBox.innerHTML = "";
+
+      definitions.forEach(kpi => {
+        const total = (entries || [])
+          .filter(entry => entry.kpi_id === kpi.id)
+          .reduce((sum,entry) => sum + Number(entry.value),0);
+
+        const line = document.createElement("div");
+        line.style.margin = "6px 0";
+        line.textContent =
+          `${kpi.name}: ${new Intl.NumberFormat("es-ES",{
+            maximumFractionDigits:2
+          }).format(total)} ${kpi.unit || ""}`;
+
+        totalsBox.append(line);
+      });
+    }
+
+    form.elements.entry_date.addEventListener(
+      "change",
+      () => loadCurrentTotals().catch(err => {
+        totalsBox.textContent = err.message;
+      })
+    );
+
+    await loadCurrentTotals();
 
     form.addEventListener("submit",async event => {
       event.preventDefault();
@@ -1439,6 +1492,7 @@ async function showAdminMovementForm(card,user) {
 
         if(error) throw error;
 
+        await loadCurrentTotals();
         status.textContent = "Movimiento guardado correctamente.";
         form.elements.amount.value = "";
       } catch(err) {
@@ -1453,6 +1507,7 @@ async function showAdminMovementForm(card,user) {
     card.append(form);
   }
 }
+
 
 function showEditForm(card,user) {
   const old = card.querySelector(".edit-form");
