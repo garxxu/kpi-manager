@@ -678,9 +678,16 @@ async function loadUsers() {
         }
       });
 
-      actions.append(edit,reset,toggle);
-      card.append(actions);
-      $("usersList").append(card);
+const movements = document.createElement("button");
+movements.className = "secondary";
+movements.textContent = "Gestionar movimientos";
+movements.addEventListener("click",() =>
+  showAdminMovementForm(card,user)
+);
+
+actions.append(edit,reset,toggle,movements);
+card.append(actions);
+$("usersList").append(card);
     });
   } catch(err) {
     $("usersList").textContent = "";
@@ -1338,6 +1345,114 @@ await refreshSummary();
 
 
 
+
+async function showAdminMovementForm(card,user) {
+  const old = card.querySelector(".admin-movement-form");
+  if(old) {
+    old.remove();
+    return;
+  }
+
+  const form = document.createElement("form");
+  form.className = "admin-movement-form";
+  form.innerHTML = `
+    <hr>
+    <h3>Gestionar movimientos de ${user.full_name || user.username}</h3>
+
+    <label>Indicador</label>
+    <select name="kpi" required></select>
+
+    <label>Fecha del movimiento</label>
+    <input type="date" name="entry_date" required>
+
+    <label>Operación</label>
+    <select name="operation">
+      <option value="add">Añadir cantidad</option>
+      <option value="subtract">Restar cantidad</option>
+    </select>
+
+    <label>Cantidad</label>
+    <input type="number" name="amount" min="0.01" step="0.01" required>
+
+    <button type="submit" style="margin-top:14px">
+      Guardar movimiento
+    </button>
+    <div class="status"></div>
+  `;
+
+  const kpiSelect = form.elements.kpi;
+  const status = form.querySelector(".status");
+
+  try {
+    const {data:definitions,error} = await client
+      .from("kpi_definitions")
+      .select("id,name")
+      .eq("active",true)
+      .in("name",["Garantías","Financiación","Protectores"])
+      .order("name");
+
+    if(error) throw error;
+
+    if(!definitions || definitions.length === 0) {
+      throw new Error("No se encontraron indicadores disponibles.");
+    }
+
+    definitions.forEach(kpi => {
+      const option = document.createElement("option");
+      option.value = kpi.id;
+      option.textContent = kpi.name;
+      kpiSelect.append(option);
+    });
+
+    const now = new Date();
+    const localDate = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2,"0"),
+      String(now.getDate()).padStart(2,"0")
+    ].join("-");
+
+    form.elements.entry_date.value = localDate;
+
+    form.addEventListener("submit",async event => {
+      event.preventDefault();
+
+      const amount = Number(form.elements.amount.value);
+
+      if(!Number.isFinite(amount) || amount <= 0) {
+        status.textContent = "Introduce una cantidad mayor que cero.";
+        return;
+      }
+
+      status.textContent = "Guardando movimiento...";
+
+      try {
+        const {error} = await client.rpc(
+          "apply_kpi_movement_for_user",
+          {
+            p_user_id:user.user_id,
+            p_kpi_id:kpiSelect.value,
+            p_entry_date:form.elements.entry_date.value,
+            p_amount:amount,
+            p_operation:form.elements.operation.value
+          }
+        );
+
+        if(error) throw error;
+
+        status.textContent = "Movimiento guardado correctamente.";
+        form.elements.amount.value = "";
+      } catch(err) {
+        status.textContent = err.message;
+      }
+    });
+
+    card.append(form);
+
+  } catch(err) {
+    status.textContent = err.message;
+    card.append(form);
+  }
+}
 
 function showEditForm(card,user) {
   const old = card.querySelector(".edit-form");
