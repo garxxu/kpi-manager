@@ -1918,9 +1918,16 @@ async function showAdminMovementForm(card,user) {
     <label>Cantidad</label>
     <input type="number" name="amount" step="0.01" required>
 
-    <button type="submit" style="margin-top:14px">
-      Guardar movimiento
-    </button>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap">
+      <button type="submit">
+        💾 Guardar movimiento
+      </button>
+      <button type="button" class="reset-kpi-btn secondary" style="background:#3b2d35;border:1px solid #71313d;color:#fecaca">
+        🔄 Poner indicador a 0 este mes
+      </button>
+    </div>
+
+
     <div class="status"></div>
   `;
 
