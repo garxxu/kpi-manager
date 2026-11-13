@@ -135,6 +135,13 @@ hr{border:0;border-top:1px solid #40506a;margin:20px 0}
     <div id="rankingContent"></div>
   </div>
 </section>
+    <section id="summarySection" class="hidden">
+  <div class="card">
+    <h2>Resumen mensual del equipo</h2>
+    <p>Consulta los resultados y la evolución mensual de cada empleado.</p>
+    <div id="summaryContent"></div>
+  </div>
+</section>
 
 <section id="targetsSection" class="hidden">
   <div class="card">
@@ -241,6 +248,7 @@ async function loadProfile(user) {
 
 $("usersTab").classList.toggle("hidden", !isAdmin);
 $("targetsTab").classList.toggle("hidden", !isAdmin);
+  $("summaryTab").classList.toggle("hidden", !isAdmin);
 
 showTab("dashboard");
 
@@ -261,12 +269,16 @@ function showTab(tab) {
   $("dashboardSection").classList.toggle("hidden", tab !== "dashboard");
   $("rankingSection").classList.toggle("hidden", tab !== "ranking");
   $("targetsSection").classList.toggle("hidden", tab !== "targets");
+  $("summarySection").classList.toggle("hidden", tab !== "summary");
   $("accountSection").classList.toggle("hidden", tab !== "account");
   $("usersSection").classList.toggle("hidden", tab !== "users");
 
   if (tab === "ranking" && currentUser) {
     loadRanking();
   }
+  if (tab === "summary" && currentUser) {
+  loadSummary();
+}
 }
 
 
