@@ -817,6 +817,7 @@ async function loadTargets() {
 
   
 
+
 async function loadRanking() {
   const content = $("rankingContent");
   content.textContent = "Cargando ranking...";
@@ -846,17 +847,51 @@ async function loadRanking() {
         "'": "&#39;"
       })[char]);
 
-    const percentage = value =>
-      value === null ? "—" :
+    const formatPct = value =>
       Number(value).toLocaleString("es-ES", {
         maximumFractionDigits: 2
       }) + "%";
 
-    const score = value =>
+    const formatScore = value =>
       Number(value).toLocaleString("es-ES", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
+
+    function progressCell(value) {
+      const pct = Number(value);
+      const width = Math.min(Math.max(pct, 0), 100);
+
+      let difference;
+      if (pct < 100) {
+        difference = `Faltan ${formatPct(100 - pct)}`;
+      } else if (pct > 100) {
+        difference = `Superado +${formatPct(pct - 100)}`;
+      } else {
+        difference = "Objetivo cumplido";
+      }
+
+      return `
+        <div style="min-width:125px">
+          <strong>${formatPct(pct)}</strong>
+          <div style="
+            height:7px;
+            background:#263449;
+            border-radius:8px;
+            overflow:hidden;
+            margin:7px 0
+          ">
+            <div style="
+              height:100%;
+              width:${width}%;
+              background:#35c98a;
+              border-radius:8px
+            "></div>
+          </div>
+          <div class="small">${difference}</div>
+        </div>
+      `;
+    }
 
     async function refreshRanking() {
       results.textContent = "Calculando clasificación...";
@@ -869,12 +904,13 @@ async function loadRanking() {
 
       const completed = data
         .filter(user => user.objectives_complete)
-        .sort((a, b) => Number(b.ranking_score) - Number(a.ranking_score));
+        .sort((a, b) =>
+          Number(b.ranking_score) - Number(a.ranking_score)
+        );
 
       const pending = data.filter(user => !user.objectives_complete);
 
       const podium = completed.slice(0, 3);
-      const others = completed.slice(3);
 
       const podiumHtml = podium.length ? `
         <h3 style="margin-bottom:16px">Los mejores del equipo</h3>
@@ -887,7 +923,7 @@ async function loadRanking() {
         ">
           ${podium.map((user, index) => {
             const position = index + 1;
-            const scoreValue = Number(user.ranking_score);
+            const score = Number(user.ranking_score);
 
             return `
               <div style="
@@ -897,11 +933,7 @@ async function loadRanking() {
                 padding:20px;
                 text-align:center
               ">
-                <div style="
-                  font-size:13px;
-                  color:#aab8ca;
-                  margin-bottom:12px
-                ">
+                <div class="small" style="margin-bottom:12px">
                   ${position === 1 ? "1.º PUESTO" :
                     position === 2 ? "2.º PUESTO" : "3.º PUESTO"}
                 </div>
@@ -920,25 +952,10 @@ async function loadRanking() {
                   font-weight:800;
                   color:#35c98a
                 ">
-                  ${score(scoreValue)}
+                  ${formatScore(score)}
                 </div>
 
                 <div class="small">puntos sobre 100</div>
-
-                <div style="
-                  height:7px;
-                  background:#263449;
-                  border-radius:8px;
-                  overflow:hidden;
-                  margin-top:16px
-                ">
-                  <div style="
-                    height:100%;
-                    width:${Math.min(Math.max(scoreValue, 0), 100)}%;
-                    background:#35c98a;
-                    border-radius:8px
-                  "></div>
-                </div>
               </div>
             `;
           }).join("")}
@@ -947,33 +964,62 @@ async function loadRanking() {
         <p>Todavía no hay empleados con los tres objetivos configurados.</p>
       `;
 
-      const tableHtml = others.length ? `
-        <h3 style="margin-bottom:12px">Resto de la clasificación</h3>
+      const tableHtml = completed.length ? `
+        <h3 style="margin-bottom:8px">Clasificación detallada</h3>
+        <p class="small" style="margin-bottom:16px">
+          Porcentaje real de cumplimiento respecto al objetivo mensual.
+          Los porcentajes pueden superar el 100 %.
+        </p>
 
         <div style="overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;text-align:left">
+          <table style="
+            width:100%;
+            min-width:850px;
+            border-collapse:collapse;
+            text-align:left
+          ">
             <thead>
-              <tr>
+              <tr style="border-bottom:1px solid #34445a">
                 <th style="padding:12px">Pos.</th>
                 <th style="padding:12px">Empleado</th>
-                <th style="padding:12px">Garantías</th>
-                <th style="padding:12px">Financiación</th>
-                <th style="padding:12px">Protectores</th>
-                <th style="padding:12px">Puntuación</th>
+                <th style="padding:12px">Garantías (50 %)</th>
+                <th style="padding:12px">Financiación (35 %)</th>
+                <th style="padding:12px">Protectores (15 %)</th>
+                <th style="padding:12px">Ranking</th>
               </tr>
             </thead>
+
             <tbody>
-              ${others.map((user, index) => `
-                <tr style="border-top:1px solid #263449">
-                  <td style="padding:14px">${index + 4}</td>
-                  <td style="padding:14px">
-                    <strong>${escapeHtml(user.full_name || user.username)}</strong>
+              ${completed.map((user, index) => `
+                <tr style="
+                  border-bottom:1px solid #263449;
+                  background:${index < 3 ? "rgba(53,201,138,0.04)" : "transparent"}
+                ">
+                  <td style="padding:14px;font-weight:700">
+                    ${index + 1}
                   </td>
-                  <td style="padding:14px">${percentage(user.garantias_pct)}</td>
-                  <td style="padding:14px">${percentage(user.financiacion_pct)}</td>
-                  <td style="padding:14px">${percentage(user.protectores_pct)}</td>
+
+                  <td style="padding:14px;font-weight:600">
+                    ${escapeHtml(user.full_name || user.username)}
+                  </td>
+
                   <td style="padding:14px">
-                    <strong>${score(user.ranking_score)}</strong>
+                    ${progressCell(user.garantias_pct)}
+                  </td>
+
+                  <td style="padding:14px">
+                    ${progressCell(user.financiacion_pct)}
+                  </td>
+
+                  <td style="padding:14px">
+                    ${progressCell(user.protectores_pct)}
+                  </td>
+
+                  <td style="padding:14px">
+                    <strong style="color:#35c98a">
+                      ${formatScore(user.ranking_score)}
+                    </strong>
+                    <div class="small">sobre 100</div>
                   </td>
                 </tr>
               `).join("")}
@@ -991,8 +1037,10 @@ async function loadRanking() {
         ">
           <h3>Objetivos pendientes</h3>
           <p class="small">
-            Estos empleados todavía no tienen los tres objetivos configurados.
+            Estos empleados todavía no tienen los tres objetivos
+            de ranking configurados.
           </p>
+
           ${pending.map(user => `
             <div style="padding:10px 0;border-top:1px solid #263449">
               ${escapeHtml(user.full_name || user.username)}
@@ -1012,6 +1060,7 @@ async function loadRanking() {
     content.textContent = "No se pudo cargar el ranking: " + error.message;
   }
 }
+
 
 
 
