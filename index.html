@@ -1321,6 +1321,7 @@ await refreshSummary();
 
 
 
+
 function showEditForm(card,user) {
   const old = card.querySelector(".edit-form");
   if(old) { old.remove(); return; }
@@ -1338,6 +1339,10 @@ function showEditForm(card,user) {
       <option value="employee">Empleado</option>
       <option value="admin">Administrador</option>
     </select>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:12px">
+      <input type="checkbox" name="participates_in_ranking">
+      Participa en el ranking
+    </label>
     <button type="submit" style="margin-top:14px">Guardar cambios</button>
     <div class="status"></div>
   `;
@@ -1345,6 +1350,8 @@ function showEditForm(card,user) {
   form.elements.full_name.value = user.full_name || "";
   form.elements.username.value = user.username || "";
   form.elements.role.value = user.role;
+  form.elements.participates_in_ranking.checked =
+    Boolean(user.participates_in_ranking);
 
   form.addEventListener("submit",async event => {
     event.preventDefault();
@@ -1354,7 +1361,9 @@ function showEditForm(card,user) {
       target_user_id:user.user_id,
       full_name:form.elements.full_name.value.trim(),
       username:form.elements.username.value.trim(),
-      role:form.elements.role.value
+      role:form.elements.role.value,
+      participates_in_ranking:
+        form.elements.participates_in_ranking.checked
     };
 
     if(user.user_id === currentUser.id && values.role !== "admin") {
@@ -1373,6 +1382,7 @@ function showEditForm(card,user) {
 
   card.append(form);
 }
+
 
 function showResetForm(card,user) {
   const old = card.querySelector(".reset-form");
