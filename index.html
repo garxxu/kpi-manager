@@ -1237,7 +1237,7 @@ async function loadRanking() {
                 </div>
 
                 <div style="margin-bottom:12px;overflow-wrap:anywhere">
-                  <button type="button" class="podium-user-btn" onclick="openUserProfile('${user.user_id}', '${escapeHtml(user.full_name || user.username)}', $('rankingMonth').value)">
+                  <button type="button" class="podium-user-btn" onclick="openUserProfile('${user.employee_id || user.user_id}', '${escapeHtml(user.full_name || user.username)}', $('rankingMonth').value)">
                     👤 ${escapeHtml(user.full_name || user.username)}
                   </button>
                 </div>
@@ -1295,7 +1295,7 @@ async function loadRanking() {
                   </td>
 
                   <td style="padding:14px;font-weight:600">
-                    <button type="button" class="user-link-btn" onclick="openUserProfile('${user.user_id}', '${escapeHtml(user.full_name || user.username)}', $('rankingMonth').value)">
+                    <button type="button" class="user-link-btn" onclick="openUserProfile('${user.employee_id || user.user_id}', '${escapeHtml(user.full_name || user.username)}', $('rankingMonth').value)">
                       👤 ${escapeHtml(user.full_name || user.username)}
                     </button>
                   </td>
