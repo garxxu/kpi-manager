@@ -197,7 +197,7 @@ hr{border:0;border-top:1px solid #3b4e6d;margin:22px 0}
     </div>
 
     <nav class="sidebar-nav">
-      <button class="active" data-tab="dashboard">
+      <button id="dashboardTab" class="active" data-tab="dashboard">
         <span class="nav-icon">📊</span>
         <span>Mi panel</span>
       </button>
@@ -525,6 +525,10 @@ $("sidebarLogout")?.addEventListener("click", () => {
 });
 
 function showTab(tab) {
+  // Redirigir a ranking si intenta ir a dashboard sin participar
+  if (tab === "dashboard" && currentProfile && !currentProfile.participates_in_ranking) {
+    tab = "ranking";
+  }
   closeSidebar();
   document.querySelectorAll("nav button").forEach(b => {
     b.classList.toggle("active", b.dataset.tab === tab);
