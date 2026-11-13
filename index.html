@@ -79,9 +79,12 @@ hr{border:0;border-top:1px solid #40506a;margin:20px 0}
 
   <main>
     <nav>
-      <button class="active" data-tab="account">Mi cuenta</button>
-      <button id="usersTab" data-tab="users" class="hidden">Usuarios</button>
-    </nav>
+  <button class="active" data-tab="dashboard">Mi panel</button>
+  <button data-tab="ranking">Ranking</button>
+  <button id="targetsTab" data-tab="targets" class="hidden">Objetivos</button>
+  <button data-tab="account">Mi cuenta</button>
+  <button id="usersTab" data-tab="users" class="hidden">Usuarios</button>
+</nav>
 
     <section id="accountSection">
       <div class="card">
@@ -115,6 +118,30 @@ hr{border:0;border-top:1px solid #40506a;margin:20px 0}
         <div id="ownPasswordStatus" class="status"></div>
       </div>
     </section>
+
+    <section id="dashboardSection" class="hidden">
+  <div class="card">
+    <h2>Mi panel</h2>
+    <p>Consulta tus objetivos y el progreso de este mes.</p>
+    <div id="dashboardContent"></div>
+  </div>
+</section>
+
+<section id="rankingSection" class="hidden">
+  <div class="card">
+    <h2>Ranking del equipo</h2>
+    <p>Clasificación mensual según el cumplimiento de objetivos.</p>
+    <div id="rankingContent"></div>
+  </div>
+</section>
+
+<section id="targetsSection" class="hidden">
+  <div class="card">
+    <h2>Objetivos mensuales</h2>
+    <p>Configura los objetivos individuales de cada empleado.</p>
+    <div id="targetsContent"></div>
+  </div>
+</section>
 
     <section id="usersSection" class="hidden">
       <div class="card">
