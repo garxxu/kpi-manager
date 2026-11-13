@@ -75,12 +75,10 @@ input[type="month"],
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.1s ease;
-  -webkit-appearance: none;
-  appearance: none;
 }
 
 input[type="month"] {
-  min-width: 235px;
+  min-width: 250px;
 }
 
 input[type="date"]:hover,
@@ -977,7 +975,7 @@ async function loadDashboard(selectedDate = null, forcedMonth = null) {
             type="month"
             value="${selectedDashboardMonth}"
             max="${actualCurrentMonthKey}"
-            style="width:auto;min-width:240px;max-width:100%;margin:0;padding:10px 14px"
+            style="width:auto;min-width:250px;max-width:100%;margin:0;padding:10px 14px"
           >
         </div>
       </div>
