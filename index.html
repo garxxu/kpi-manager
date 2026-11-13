@@ -258,6 +258,124 @@ function showTab(tab) {
   $("usersSection").classList.toggle("hidden", tab !== "users");
 }
 
+  
+async function loadDashboard() {
+  const content = $("dashboardContent");
+  content.textContent = "Cargando tus resultados...";
+
+  try {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+
+    const pad = n => String(n).padStart(2, "0");
+    const monthStart = `${year}-${pad(month + 1)}-01`;
+    const nextDate = new Date(year, month + 1, 1);
+    const nextMonth = `${nextDate.getFullYear()}-${pad(nextDate.getMonth() + 1)}-01`;
+
+    const [definitions, targets, entries] = await Promise.all([
+      client.from("kpi_definitions")
+        .select("id,name,unit,weight")
+        .eq("active", true),
+
+      client.from("monthly_targets")
+        .select("kpi_id,target")
+        .eq("employee_id", currentUser.id)
+        .eq("month", monthStart),
+
+      client.from("kpi_entries")
+        .select("kpi_id,value")
+        .eq("user_id", currentUser.id)
+        .gte("entry_date", monthStart)
+        .lt("entry_date", nextMonth)
+    ]);
+
+    if (definitions.error || targets.error || entries.error) {
+      throw new Error("No se pudieron cargar los resultados.");
+    }
+
+    const targetMap = Object.fromEntries(
+      targets.data.map(item => [item.kpi_id, Number(item.target)])
+    );
+
+    const actualMap = {};
+
+    entries.data.forEach(item => {
+      actualMap[item.kpi_id] =
+        (actualMap[item.kpi_id] || 0) + Number(item.value);
+    });
+
+    const order = ["Venta", "NPS", "Garantías", "Financiación", "Protectores"];
+
+    definitions.data.sort(
+      (a, b) => order.indexOf(a.name) - order.indexOf(b.name)
+    );
+
+    const money = value => new Intl.NumberFormat("es-ES", {
+      style: "currency",
+      currency: "EUR",
+      maximumFractionDigits: 0
+    }).format(value);
+
+    const number = value => new Intl.NumberFormat("es-ES", {
+      maximumFractionDigits: 1
+    }).format(value);
+
+    const cards = definitions.data.map(kpi => {
+      const target = targetMap[kpi.id] || 0;
+      const isVisual = ["Venta", "NPS"].includes(kpi.name);
+      const actual = isVisual ? null : (actualMap[kpi.id] || 0);
+      const percentage = target > 0 && actual !== null
+        ? actual / target * 100
+        : 0;
+
+      const unit = kpi.unit === "€"
+        ? money
+        : number;
+
+      const resultText = isVisual
+        ? "Objetivo visual"
+        : unit(actual);
+
+      const targetText = target > 0
+        ? unit(target)
+        : "Pendiente de configurar";
+
+      const progress = isVisual ? 0 : Math.min(percentage, 100);
+
+      return `
+        <div class="card">
+          <h3>${kpi.name}</h3>
+          <div class="small">Objetivo mensual</div>
+          <strong>${targetText}</strong>
+          <div class="small" style="margin-top:12px">Resultado del mes</div>
+          <strong>${resultText}</strong>
+          ${isVisual ? "" : `
+            <div class="small" style="margin-top:12px">
+              ${target > 0 ? number(percentage) + "% completado" : "Sin objetivo configurado"}
+            </div>
+            <div style="height:8px;background:#263449;border-radius:8px;margin-top:8px;overflow:hidden">
+              <div style="height:100%;width:${progress}%;background:#35c98a;border-radius:8px"></div>
+            </div>
+          `}
+        </div>
+      `;
+    });
+
+    content.innerHTML = `
+      <h3>${now.toLocaleDateString("es-ES", {
+        month: "long",
+        year: "numeric"
+      })}</h3>
+      <div class="grid">${cards.join("")}</div>
+    `;
+
+  } catch (error) {
+    content.textContent = error.message;
+  }
+}
+
+
 document.querySelectorAll("nav button").forEach(button => {
   button.addEventListener("click",() => showTab(button.dataset.tab));
 });
