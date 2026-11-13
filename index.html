@@ -178,24 +178,79 @@ hr{border:0;border-top:1px solid #3b4e6d;margin:22px 0}
 </section>
 
 <div id="app" class="hidden">
-  <header>
-    <div class="brand">Gru<span>M</span>ito</div>
-    <div>
-      <div id="headerName"></div>
-      <div id="headerRole" class="header-user"></div>
+  <!-- Overlay del Sidebar -->
+  <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+  <!-- Panel Lateral (Sidebar Desplegable) -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">Gru<span>M</span>ito</div>
+      <button id="sidebarClose" class="sidebar-close" aria-label="Cerrar menú">&times;</button>
     </div>
-    <button class="secondary" id="logout">Cerrar sesión</button>
+
+    <div id="sidebarUserBox" class="sidebar-user" title="Ver mi perfil">
+      <div id="sidebarUserAvatar" class="sidebar-user-avatar">GM</div>
+      <div class="sidebar-user-info">
+        <span id="sidebarUserName" class="sidebar-user-name">Cargando...</span>
+        <span id="sidebarUserRole" class="sidebar-user-role">Empleado</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="active" data-tab="dashboard">
+        <span class="nav-icon">📊</span>
+        <span>Mi panel</span>
+      </button>
+      <button data-tab="ranking">
+        <span class="nav-icon">🏆</span>
+        <span>Ranking</span>
+      </button>
+      <button id="summaryTab" data-tab="summary" class="hidden">
+        <span class="nav-icon">📈</span>
+        <span>Resumen mensual</span>
+      </button>
+      <button id="targetsTab" data-tab="targets" class="hidden">
+        <span class="nav-icon">🎯</span>
+        <span>Objetivos</span>
+      </button>
+      <button data-tab="account">
+        <span class="nav-icon">👤</span>
+        <span>Mi cuenta</span>
+      </button>
+      <button id="usersTab" data-tab="users" class="hidden">
+        <span class="nav-icon">👥</span>
+        <span>Usuarios</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button id="sidebarLogout" type="button">
+        <span>🚪</span> Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <header>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button id="menuToggle" class="menu-toggle-btn" aria-label="Abrir menú de navegación">
+        <svg viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+      <div class="brand">Gru<span>M</span>ito</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div>
+        <div id="headerName"></div>
+        <div id="headerRole" class="header-user"></div>
+      </div>
+      <button class="secondary" id="logout" style="display:none">Cerrar sesión</button>
+    </div>
   </header>
 
   <main>
-    <nav>
-  <button class="active" data-tab="dashboard">Mi panel</button>
-  <button data-tab="ranking">Ranking</button>
-      <button id="summaryTab" data-tab="summary" class="hidden">Resumen mensual</button>
-  <button id="targetsTab" data-tab="targets" class="hidden">Objetivos</button>
-  <button data-tab="account">Mi cuenta</button>
-  <button id="usersTab" data-tab="users" class="hidden">Usuarios</button>
-</nav>
 
     <section id="accountSection">
       <div class="card">
