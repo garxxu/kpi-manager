@@ -688,7 +688,7 @@ async function loadTargets() {
     if (definitionsResult.error) throw definitionsResult.error;
 
     const employees = (usersResult.users || [])
-      .filter(user => user.role === "employee");
+  .filter(user => user.participates_in_ranking);
 
     const kpis = ["Venta", "NPS", "Garantías", "Financiación", "Protectores"]
       .map(name => definitionsResult.data.find(kpi => kpi.name === name))
