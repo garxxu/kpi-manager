@@ -124,6 +124,34 @@ hr{border:0;border-top:1px solid #3b4e6d;margin:22px 0}
 .badge-item.unlocked .badge-tag{background:#df0000;color:white}
 .badge-item.locked .badge-tag{background:#334155;color:#94a3b8}
 
+/* Sidebar Navigation & Overlay */
+.sidebar-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(7,11,19,0.7);backdrop-filter:blur(4px);z-index:900;opacity:0;pointer-events:none;transition:opacity .25s ease;-webkit-tap-highlight-color:transparent}
+.sidebar-overlay.active{opacity:1;pointer-events:auto}
+
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:min(285px,82vw);background:#162234;border-right:1px solid #2d3f5a;z-index:910;transform:translateX(-100%);transition:transform .28s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;box-shadow:8px 0 24px rgba(0,0,0,0.45);padding:20px 16px}
+.sidebar.active{transform:translateX(0)}
+
+.sidebar-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:1px solid #283952;margin-bottom:14px}
+.sidebar-close{background:#23334a;color:#cbd5e1;border:0;border-radius:50%;width:38px;height:38px;min-height:38px;padding:0;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+.sidebar-user{display:flex;align-items:center;gap:12px;padding:12px;background:#1a273b;border-radius:14px;margin-bottom:18px;border:1px solid #2d3f5a;cursor:pointer}
+.sidebar-user-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#df0000,#790000);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;background-size:cover;background-position:center;flex-shrink:0}
+.sidebar-user-info{display:flex;flex-direction:column;overflow:hidden}
+.sidebar-user-name{font-weight:700;font-size:14.5px;color:#f8fafc;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.sidebar-user-role{font-size:12px;color:#94a3b8}
+
+.sidebar-nav{display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto}
+.sidebar-nav button{background:transparent;color:#cbd5e1;width:100%;min-height:48px;padding:12px 16px;border-radius:12px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:12px;justify-content:flex-start;text-align:left;transition:background .15s,color .15s,transform .1s}
+.sidebar-nav button:active{transform:scale(0.98)}
+.sidebar-nav button.active{background:#26b783;color:#071b16;font-weight:800}
+.sidebar-nav button .nav-icon{font-size:18px;width:22px;text-align:center}
+
+.sidebar-footer{padding-top:14px;border-top:1px solid #283952;margin-top:auto}
+.sidebar-footer button{width:100%;min-height:46px;background:#24334a;color:#f87171;font-weight:700;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px}
+
+.menu-toggle-btn{background:#23334a;color:#f8fafc;border:0;border-radius:12px;width:44px;height:44px;min-height:44px;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .15s}
+.menu-toggle-btn:hover{background:#304360}
+.menu-toggle-btn svg{width:24px;height:24px;stroke:#f8fafc;fill:none}
 /* Interactive Clickable User Names */
 .user-link-btn{background:transparent;border:0;color:#38bdf8;font-weight:700;padding:4px 6px;margin:-4px -6px;cursor:pointer;text-align:left;font-size:inherit;display:inline-flex;align-items:center;gap:6px;border-radius:8px;text-decoration:underline;text-underline-offset:3px}
 .user-link-btn:hover{background:rgba(56,189,248,0.12)}
@@ -363,6 +391,23 @@ async function loadProfile(user) {
 
   $("headerName").textContent = data.full_name || data.username; $("headerName").className = "header-user clickable-header-name"; $("headerName").onclick = () => openUserProfile(currentUser.id, data.full_name || data.username);
   $("headerRole").textContent = data.role === "admin" ? "Administrador" : "Empleado";
+  
+  // Actualizar usuario en Sidebar
+  const sName = $("sidebarUserName");
+  const sRole = $("sidebarUserRole");
+  const sAvatar = $("sidebarUserAvatar");
+  const displayName = data.full_name || data.username || "Usuario";
+  if (sName) sName.textContent = displayName;
+  if (sRole) sRole.textContent = data.role === "admin" ? "Administrador" : "Empleado";
+  if (sAvatar) {
+    if (data.avatar_url) {
+      sAvatar.style.backgroundImage = `url("${data.avatar_url}")`;
+      sAvatar.textContent = "";
+    } else {
+      sAvatar.style.backgroundImage = "none";
+      sAvatar.textContent = (displayName || "GM").slice(0, 2).toUpperCase();
+    }
+  }
   const avatarEl = $("accountAvatarPreview");
   if(avatarEl) {
     if(data.avatar_url) {
@@ -394,7 +439,38 @@ if(isAdmin) {
 }
 
 
+function openSidebar() {
+  $("sidebar")?.classList.add("active");
+  $("sidebarOverlay")?.classList.add("active");
+  document.body.style.overflow = "hidden";
+}
+
+function closeSidebar() {
+  $("sidebar")?.classList.remove("active");
+  $("sidebarOverlay")?.classList.remove("active");
+  document.body.style.overflow = "";
+}
+
+$("menuToggle")?.addEventListener("click", openSidebar);
+$("sidebarClose")?.addEventListener("click", closeSidebar);
+$("sidebarOverlay")?.addEventListener("click", closeSidebar);
+
+// Abrir perfil propio al hacer clic en la tarjeta de usuario del sidebar
+$("sidebarUserBox")?.addEventListener("click", () => {
+  closeSidebar();
+  if (currentUser) {
+    openUserProfile(currentUser.id, currentProfile?.full_name || currentProfile?.username);
+  }
+});
+
+// Cerrar sesión desde el sidebar
+$("sidebarLogout")?.addEventListener("click", () => {
+  closeSidebar();
+  $("logout")?.click();
+});
+
 function showTab(tab) {
+  closeSidebar();
   document.querySelectorAll("nav button").forEach(b => {
     b.classList.toggle("active", b.dataset.tab === tab);
   });
