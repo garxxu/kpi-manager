@@ -340,9 +340,19 @@ hr{border:0;border-top:1px solid #3b4e6d;margin:22px 0}
             <p>Administra las cuentas del equipo.</p>
           </div>
           <button id="refreshUsers" class="secondary">Actualizar lista</button>
+        <!-- Subpestañas de usuarios -->
+        <div style="display:flex;gap:10px;margin-top:16px;border-bottom:1px solid #2d3f5a;padding-bottom:12px">
+          <button id="tabActiveUsers" type="button" class="active" style="padding:8px 18px;min-height:40px;border-radius:20px;font-size:14px">
+            👥 Usuarios activos
+          </button>
+          <button id="tabDeletedUsers" type="button" class="secondary" style="padding:8px 18px;min-height:40px;border-radius:20px;font-size:14px">
+            🗑️ Usuarios eliminados (<span id="deletedCount">0</span>)
+          </button>
+        </div>
         </div>
         <div id="usersStatus" class="status"></div>
         <div id="usersList"></div>
+        <div id="deletedUsersList" class="hidden"></div>
       </div>
 
       <div class="card">
