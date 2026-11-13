@@ -816,9 +816,10 @@ async function loadTargets() {
 }
 
   
+
 async function loadRanking() {
   const content = $("rankingContent");
-  content.textContent = "Calculando ranking...";
+  content.textContent = "Cargando ranking...";
 
   try {
     const now = new Date();
@@ -826,7 +827,7 @@ async function loadRanking() {
       `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
     content.innerHTML = `
-      <div style="margin-bottom:20px">
+      <div style="margin-bottom:24px">
         <label for="rankingMonth">Mes del ranking</label>
         <input id="rankingMonth" type="month" value="${currentMonth}">
       </div>
@@ -836,8 +837,29 @@ async function loadRanking() {
     const monthInput = $("rankingMonth");
     const results = $("rankingResults");
 
+    const escapeHtml = value =>
+      String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]);
+
+    const percentage = value =>
+      value === null ? "—" :
+      Number(value).toLocaleString("es-ES", {
+        maximumFractionDigits: 2
+      }) + "%";
+
+    const score = value =>
+      Number(value).toLocaleString("es-ES", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
     async function refreshRanking() {
-      results.textContent = "Calculando ranking...";
+      results.textContent = "Calculando clasificación...";
 
       const { data, error } = await client.rpc("get_team_ranking", {
         p_month: monthInput.value + "-01"
@@ -845,74 +867,141 @@ async function loadRanking() {
 
       if (error) throw error;
 
-      const escapeHtml = value =>
-        String(value ?? "").replace(/[&<>"']/g, char => ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;"
-        })[char]);
+      const completed = data
+        .filter(user => user.objectives_complete)
+        .sort((a, b) => Number(b.ranking_score) - Number(a.ranking_score));
 
-      const completed = data.filter(user => user.objectives_complete);
       const pending = data.filter(user => !user.objectives_complete);
 
-      const percentage = value =>
-        value === null ? "—" :
-        Number(value).toLocaleString("es-ES", {
-          maximumFractionDigits: 2
-        }) + "%";
+      const podium = completed.slice(0, 3);
+      const others = completed.slice(3);
 
-      const score = value =>
-        value === null ? "Pendiente" :
-        Number(value).toLocaleString("es-ES", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        }) + " puntos";
+      const podiumHtml = podium.length ? `
+        <h3 style="margin-bottom:16px">Los mejores del equipo</h3>
 
-      results.innerHTML = `
-        ${completed.length === 0
-          ? `<p>Todavía no hay empleados con los tres objetivos configurados.</p>`
-          : `
-            <div style="overflow-x:auto">
-              <table style="width:100%;border-collapse:collapse;text-align:left">
-                <thead>
-                  <tr>
-                    <th style="padding:10px">Pos.</th>
-                    <th style="padding:10px">Empleado</th>
-                    <th style="padding:10px">Garantías</th>
-                    <th style="padding:10px">Financiación</th>
-                    <th style="padding:10px">Protectores</th>
-                    <th style="padding:10px">Puntuación</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${completed.map((user, index) => `
-                    <tr style="border-top:1px solid #263449">
-                      <td style="padding:12px">${index + 1}</td>
-                      <td style="padding:12px">${escapeHtml(user.full_name || user.username)}</td>
-                      <td style="padding:12px">${percentage(user.garantias_pct)}</td>
-                      <td style="padding:12px">${percentage(user.financiacion_pct)}</td>
-                      <td style="padding:12px">${percentage(user.protectores_pct)}</td>
-                      <td style="padding:12px"><strong>${score(user.ranking_score)}</strong></td>
-                    </tr>
-                  `).join("")}
-                </tbody>
-              </table>
-            </div>
-          `
-        }
+        <div style="
+          display:grid;
+          grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+          gap:14px;
+          margin-bottom:30px
+        ">
+          ${podium.map((user, index) => {
+            const position = index + 1;
+            const scoreValue = Number(user.ranking_score);
 
-        ${pending.length > 0 ? `
-          <h3 style="margin-top:24px">Objetivos pendientes</h3>
-          <p class="small">Estos empleados todavía no tienen los tres objetivos configurados.</p>
+            return `
+              <div style="
+                background:#17263a;
+                border:1px solid ${position === 1 ? "#35c98a" : "#34445a"};
+                border-radius:14px;
+                padding:20px;
+                text-align:center
+              ">
+                <div style="
+                  font-size:13px;
+                  color:#aab8ca;
+                  margin-bottom:12px
+                ">
+                  ${position === 1 ? "1.º PUESTO" :
+                    position === 2 ? "2.º PUESTO" : "3.º PUESTO"}
+                </div>
+
+                <div style="
+                  font-size:17px;
+                  font-weight:700;
+                  margin-bottom:12px;
+                  overflow-wrap:anywhere
+                ">
+                  ${escapeHtml(user.full_name || user.username)}
+                </div>
+
+                <div style="
+                  font-size:30px;
+                  font-weight:800;
+                  color:#35c98a
+                ">
+                  ${score(scoreValue)}
+                </div>
+
+                <div class="small">puntos sobre 100</div>
+
+                <div style="
+                  height:7px;
+                  background:#263449;
+                  border-radius:8px;
+                  overflow:hidden;
+                  margin-top:16px
+                ">
+                  <div style="
+                    height:100%;
+                    width:${Math.min(Math.max(scoreValue, 0), 100)}%;
+                    background:#35c98a;
+                    border-radius:8px
+                  "></div>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      ` : `
+        <p>Todavía no hay empleados con los tres objetivos configurados.</p>
+      `;
+
+      const tableHtml = others.length ? `
+        <h3 style="margin-bottom:12px">Resto de la clasificación</h3>
+
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;text-align:left">
+            <thead>
+              <tr>
+                <th style="padding:12px">Pos.</th>
+                <th style="padding:12px">Empleado</th>
+                <th style="padding:12px">Garantías</th>
+                <th style="padding:12px">Financiación</th>
+                <th style="padding:12px">Protectores</th>
+                <th style="padding:12px">Puntuación</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${others.map((user, index) => `
+                <tr style="border-top:1px solid #263449">
+                  <td style="padding:14px">${index + 4}</td>
+                  <td style="padding:14px">
+                    <strong>${escapeHtml(user.full_name || user.username)}</strong>
+                  </td>
+                  <td style="padding:14px">${percentage(user.garantias_pct)}</td>
+                  <td style="padding:14px">${percentage(user.financiacion_pct)}</td>
+                  <td style="padding:14px">${percentage(user.protectores_pct)}</td>
+                  <td style="padding:14px">
+                    <strong>${score(user.ranking_score)}</strong>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      ` : "";
+
+      const pendingHtml = pending.length ? `
+        <div style="
+          margin-top:24px;
+          padding:16px;
+          background:#17263a;
+          border-radius:12px
+        ">
+          <h3>Objetivos pendientes</h3>
+          <p class="small">
+            Estos empleados todavía no tienen los tres objetivos configurados.
+          </p>
           ${pending.map(user => `
-            <div style="padding:10px;border-top:1px solid #263449">
+            <div style="padding:10px 0;border-top:1px solid #263449">
               ${escapeHtml(user.full_name || user.username)}
             </div>
           `).join("")}
-        ` : ""}
-      `;
+        </div>
+      ` : "";
+
+      results.innerHTML = podiumHtml + tableHtml + pendingHtml;
     }
 
     monthInput.addEventListener("change", refreshRanking);
@@ -923,6 +1012,7 @@ async function loadRanking() {
     content.textContent = "No se pudo cargar el ranking: " + error.message;
   }
 }
+
 
 
 
