@@ -236,17 +236,26 @@ async function loadProfile(user) {
   $("accountUsername").textContent = data.username || "—";
   $("accountRole").textContent = data.role === "admin" ? "Administrador" : "Empleado";
 
-  $("usersTab").classList.toggle("hidden",data.role !== "admin");
+  const isAdmin = data.role === "admin";
 
-  if(data.role === "admin") await loadUsers();
+$("usersTab").classList.toggle("hidden", !isAdmin);
+$("targetsTab").classList.toggle("hidden", !isAdmin);
+
+showTab("dashboard");
+
+if(isAdmin) await loadUsers();
 }
 
 function showTab(tab) {
   document.querySelectorAll("nav button").forEach(b => {
-    b.classList.toggle("active",b.dataset.tab === tab);
+    b.classList.toggle("active", b.dataset.tab === tab);
   });
-  $("accountSection").classList.toggle("hidden",tab !== "account");
-  $("usersSection").classList.toggle("hidden",tab !== "users");
+
+  $("dashboardSection").classList.toggle("hidden", tab !== "dashboard");
+  $("rankingSection").classList.toggle("hidden", tab !== "ranking");
+  $("targetsSection").classList.toggle("hidden", tab !== "targets");
+  $("accountSection").classList.toggle("hidden", tab !== "account");
+  $("usersSection").classList.toggle("hidden", tab !== "users");
 }
 
 document.querySelectorAll("nav button").forEach(button => {
