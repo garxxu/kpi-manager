@@ -2007,6 +2007,59 @@ async function showAdminMovementForm(card,user) {
 
     await loadCurrentTotals();
 
+    const resetKpiBtn = form.querySelector(".reset-kpi-btn");
+    resetKpiBtn?.addEventListener("click", async () => {
+      const selectedKpiName = kpiSelect.options[kpiSelect.selectedIndex]?.text || "este indicador";
+      const selectedDate = form.elements.entry_date.value;
+      if (!selectedDate) {
+        status.textContent = "Selecciona una fecha válida.";
+        status.className = "status error";
+        return;
+      }
+
+      const year = Number(selectedDate.slice(0,4));
+      const month = Number(selectedDate.slice(5,7));
+      const monthStart = `${selectedDate.slice(0,7)}-01`;
+
+      const now = new Date();
+      const currentMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2,"0")}-01`;
+
+      if (monthStart < currentMonthStart) {
+        alert("🔒 No se pueden reiniciar movimientos de meses ya finalizados para mantener el histórico intacto.");
+        return;
+      }
+
+      const monthName = new Date(year, month - 1, 1).toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+      const confirmed = confirm(
+        `¿Seguro que deseas reiniciar a 0 el acumulado de "${selectedKpiName}" para ${user.full_name || user.username} en ${monthName}?\n\n` +
+        `• Se restablecerán los movimientos de este mes en curso a 0.\n` +
+        `• Los meses anteriores NO se modificarán.`
+      );
+      if (!confirmed) return;
+
+      resetKpiBtn.disabled = true;
+      status.textContent = "Reiniciando a 0...";
+      status.className = "status";
+
+      try {
+        const { error } = await client.rpc("reset_kpi_for_user_month", {
+          p_user_id: user.user_id,
+          p_kpi_id: kpiSelect.value,
+          p_month: monthStart
+        });
+        if (error) throw error;
+
+        await loadCurrentTotals();
+        status.textContent = `Acumulado de ${selectedKpiName} restablecido a 0 para ${monthName}.`;
+        status.className = "status ok";
+      } catch (err) {
+        status.textContent = "Error al reiniciar: " + err.message;
+        status.className = "status error";
+      } finally {
+        resetKpiBtn.disabled = false;
+      }
+    });
+
     form.addEventListener("submit",async event => {
       event.preventDefault();
 
