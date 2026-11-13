@@ -245,7 +245,9 @@ showTab("dashboard");
 
 await loadDashboard();
 
-if(isAdmin) await loadUsers();
+if(isAdmin) {
+  await loadUsers();
+  await loadTargets();
 }
 
 function showTab(tab) {
