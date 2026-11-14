@@ -1032,26 +1032,47 @@ ${currentProfile.participates_in_ranking ? `
               <div class="small">Acumulado del día</div>
               <strong id="daily-total-${kpi.id}">Cargando...</strong>
 
-              ${isCurrentMonth ? `
-                <label style="margin-top:12px">Cantidad</label>
-                <input
-                  id="movement-amount-${kpi.id}"
-                  type="number"
-                  step="0.01"
-                  placeholder="Introduce una cantidad"
-                >
+              ${isCurrentMonth ? (
+                kpi.name === "Protectores" ? `
+                  <div style="margin-top:14px">
+                    <label style="margin-bottom:8px;display:block;font-size:13.5px;color:#94a3b8;font-weight:600">Registrar protectores:</label>
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+                      <button type="button" class="quick-protector-btn" data-operation="add" data-amount="1" data-kpi="${kpi.id}" style="background:#26b783;color:#071b16;font-size:18px;font-weight:800;padding:12px 6px;min-height:48px;border-radius:12px" title="Añadir 1 protector">
+                        +1
+                      </button>
+                      <button type="button" class="quick-protector-btn" data-operation="add" data-amount="2" data-kpi="${kpi.id}" style="background:#26b783;color:#071b16;font-size:18px;font-weight:800;padding:12px 6px;min-height:48px;border-radius:12px" title="Añadir 2 protectores">
+                        +2
+                      </button>
+                      <button type="button" class="quick-protector-btn" data-operation="subtract" data-amount="1" data-kpi="${kpi.id}" style="background:#a33b45;color:#ffffff;font-size:18px;font-weight:800;padding:12px 6px;min-height:48px;border-radius:12px" title="Restar 1 protector">
+                        −1
+                      </button>
+                      <button type="button" class="quick-protector-btn" data-operation="subtract" data-amount="2" data-kpi="${kpi.id}" style="background:#a33b45;color:#ffffff;font-size:18px;font-weight:800;padding:12px 6px;min-height:48px;border-radius:12px" title="Restar 2 protectores">
+                        −2
+                      </button>
+                    </div>
+                  </div>
+                  <div id="movement-status-${kpi.id}" class="status"></div>
+                ` : `
+                  <label style="margin-top:12px">Cantidad (€)</label>
+                  <input
+                    id="movement-amount-${kpi.id}"
+                    type="number"
+                    step="0.01"
+                    placeholder="Introduce una cantidad"
+                  >
 
-                <div class="grid" style="margin-top:12px">
-                  <button type="button" data-operation="add" data-kpi="${kpi.id}">
-                    + Añadir
-                  </button>
-                  <button type="button" data-operation="subtract" data-kpi="${kpi.id}" style="background:#a33b45">
-                    − Restar
-                  </button>
-                </div>
+                  <div class="grid" style="margin-top:12px">
+                    <button type="button" data-operation="add" data-kpi="${kpi.id}">
+                      + Añadir
+                    </button>
+                    <button type="button" data-operation="subtract" data-kpi="${kpi.id}" style="background:#a33b45">
+                      − Restar
+                    </button>
+                  </div>
 
-                <div id="movement-status-${kpi.id}" class="status"></div>
-              ` : `
+                  <div id="movement-status-${kpi.id}" class="status"></div>
+                `
+              ) : `
                 <div class="small" style="color:#94a3b8;margin-top:8px">ℹ️ Mes cerrado. Los movimientos de meses anteriores son de solo lectura.</div>
               `}
             </div>
@@ -1099,12 +1120,56 @@ ${currentProfile.participates_in_ranking ? `
 
     dateInput.addEventListener("change", loadDailyTotals);
 
-    document.querySelectorAll("[data-operation][data-kpi]").forEach(button => {
+    // Botones rápidos para Protectores (+1, +2, -1, -2)
+    document.querySelectorAll(".quick-protector-btn").forEach(button => {
+      button.addEventListener("click", async () => {
+        const kpiId = button.dataset.kpi;
+        const operation = button.dataset.operation;
+        const amount = Number(button.dataset.amount);
+        const status = $(`movement-status-${kpiId}`);
+
+        const siblingBtns = document.querySelectorAll(`.quick-protector-btn[data-kpi="${kpiId}"]`);
+        siblingBtns.forEach(b => b.disabled = true);
+        if (status) {
+          status.textContent = "Guardando...";
+          status.className = "status";
+        }
+
+        try {
+          const { error } = await client.rpc("apply_kpi_movement", {
+            p_kpi_id: kpiId,
+            p_entry_date: dateInput.value,
+            p_amount: amount,
+            p_operation: operation
+          });
+
+          if (error) throw error;
+
+          await loadDashboard(dateInput.value);
+          const sign = operation === "add" ? "+" : "−";
+          const s = $("movement-status-" + kpiId);
+          if (s) {
+            s.textContent = `${sign}${amount} protector(es) registrado(s).`;
+            s.className = "status ok";
+          }
+        } catch (error) {
+          if (status) {
+            status.textContent = error.message;
+            status.className = "status error";
+          }
+          siblingBtns.forEach(b => b.disabled = false);
+        }
+      });
+    });
+
+    // Botones de input manual para Garantías y Financiación
+    document.querySelectorAll("[data-operation][data-kpi]:not(.quick-protector-btn)").forEach(button => {
       button.addEventListener("click", async () => {
         const kpiId = button.dataset.kpi;
         const operation = button.dataset.operation;
         const amountInput = $(`movement-amount-${kpiId}`);
         const status = $(`movement-status-${kpiId}`);
+        if (!amountInput) return;
         let amount = Number(amountInput.value);
 
         if (!Number.isFinite(amount) || amount === 0) {
@@ -1303,12 +1368,14 @@ $("ownPasswordForm").addEventListener("submit",async event => {
     return;
   }
 
+  setStatus("ownPasswordStatus", "Guardando contraseña...");
   try {
-    await callFunction({action:"change_own_password",new_password:password});
+    const { error } = await client.auth.updateUser({ password: password });
+    if (error) throw error;
     $("ownPasswordForm").reset();
-    setStatus("ownPasswordStatus","Contraseña actualizada correctamente.",true);
+    setStatus("ownPasswordStatus", "Contraseña actualizada correctamente.", true);
   } catch(err) {
-    setStatus("ownPasswordStatus",err.message);
+    setStatus("ownPasswordStatus", err.message || "Error al actualizar la contraseña.");
   }
 });
 
@@ -2490,6 +2557,13 @@ async function showAdminMovementForm(card,user) {
 
     <label>Cantidad</label>
     <input type="number" name="amount" step="0.01" required>
+    <div style="display:flex;gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap">
+      <span class="small" style="color:#94a3b8">Accesos rápidos protectores:</span>
+      <button type="button" class="admin-quick-prot" data-op="add" data-val="1" style="padding:4px 12px;min-height:34px;font-size:13px;border-radius:8px;background:#26b783;color:#071b16;font-weight:700">+1</button>
+      <button type="button" class="admin-quick-prot" data-op="add" data-val="2" style="padding:4px 12px;min-height:34px;font-size:13px;border-radius:8px;background:#26b783;color:#071b16;font-weight:700">+2</button>
+      <button type="button" class="admin-quick-prot" data-op="subtract" data-val="1" style="padding:4px 12px;min-height:34px;font-size:13px;border-radius:8px;background:#a33b45;color:#ffffff;font-weight:700">−1</button>
+      <button type="button" class="admin-quick-prot" data-op="subtract" data-val="2" style="padding:4px 12px;min-height:34px;font-size:13px;border-radius:8px;background:#a33b45;color:#ffffff;font-weight:700">−2</button>
+    </div>
 
     <div style="display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap">
       <button type="submit">
@@ -2638,6 +2712,13 @@ async function showAdminMovementForm(card,user) {
       } finally {
         resetKpiBtn.disabled = false;
       }
+    });
+
+    form.querySelectorAll(".admin-quick-prot").forEach(btn => {
+      btn.addEventListener("click", () => {
+        form.elements.operation.value = btn.dataset.op;
+        form.elements.amount.value = btn.dataset.val;
+      });
     });
 
     form.addEventListener("submit",async event => {
